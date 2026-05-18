@@ -4,8 +4,8 @@ import ResultCard from './components/ResultCard'
 import MetadataViewer from './components/MetadataViewer'
 import LoadingSpinner from './components/LoadingSpinner'
 
-// Vercel exposes api/app.py at /api
-const API_URL = '/api/'
+// Localhost only — no Vercel, no deployment headaches
+const API_URL = 'http://localhost:8000/'
 
 function App() {
   const [loading, setLoading] = useState(false)
@@ -79,11 +79,7 @@ function App() {
         {error && (
           <div className="mt-6 p-4 bg-red-900/20 border border-red-500/50 rounded-lg text-red-400 animate-slide-in">
             <div className="flex items-center space-x-2">
-              <svg
-                className="w-5 h-5"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path
                   fillRule="evenodd"
                   clipRule="evenodd"
@@ -106,13 +102,12 @@ function App() {
               <h2 className="text-lg font-semibold text-cyan-400 mb-4">
                 Pipeline Flow
               </h2>
-
               <div className="flex flex-wrap items-center justify-center gap-4 text-sm">
                 {[
                   'User Prompt',
                   'Pield Sanitizer',
                   'Masked Prompt',
-                  'DeepSeek API',
+                  'Mock LLM',
                   'Masked Response',
                   'Restoration',
                   'Final Response',
@@ -121,9 +116,7 @@ function App() {
                     <span className="px-3 py-1 bg-slate-800 rounded-full text-slate-300">
                       {step}
                     </span>
-                    {i < 6 && (
-                      <span className="text-cyan-400 mx-2">→</span>
-                    )}
+                    {i < 6 && <span className="text-cyan-400 mx-2">→</span>}
                   </div>
                 ))}
               </div>
@@ -138,41 +131,22 @@ function App() {
               }`}
             >
               <span className="font-semibold">
-                {result.has_pii
-                  ? 'PII Detected and Masked'
-                  : 'No PII Detected'}
+                {result.has_pii ? 'PII Detected and Masked' : 'No PII Detected'}
               </span>
             </div>
 
             {/* Results Grid */}
             <div className="grid gap-6 md:grid-cols-2">
-              <ResultCard
-                title="Original Prompt"
-                data={result.original_prompt}
-                type="original"
-              />
-
-              <ResultCard
-                title="Masked Prompt"
-                data={result.masked_prompt}
-                type="masked"
-              />
-
+              <ResultCard title="Original Prompt" data={result.original_prompt} type="original" />
+              <ResultCard title="Masked Prompt" data={result.masked_prompt} type="masked" />
               <MetadataViewer metadata={result.metadata} />
-
-              <ResultCard
-                title="Raw LLM Response"
-                data={result.llm_response_masked || 'No LLM response'}
-                type="llm"
-              />
+              <ResultCard title="Mock LLM Response" data={result.llm_response_masked || 'No response'} type="llm" />
             </div>
 
             {/* Final Restored Response */}
             <ResultCard
               title="Restored Final Response"
-              data={
-                result.llm_response_restored || 'No restored response'
-              }
+              data={result.llm_response_restored || 'No restored response'}
               type="restored"
               fullWidth
             />
@@ -184,26 +158,18 @@ function App() {
           <h2 className="text-2xl font-bold text-center mb-8">
             <span className="gradient-text">Benchmarks</span>
           </h2>
-
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
             {[
-              { label: 'Package Size', value: '< 350 KB', icon: '📦' },
+              { label: 'Package Size', value: '322 KB', icon: '📦' },
               { label: 'Precision', value: '100%', icon: '🎯' },
               { label: 'F1 Score', value: '84%', icon: '📊' },
               { label: 'Latency', value: '0.77 ms', icon: '⚡' },
               { label: 'Published', value: 'PyPI', icon: '📚' },
             ].map((bench, i) => (
-              <div
-                key={i}
-                className="bg-slate-900 rounded-lg p-6 border border-slate-800 card-glow text-center"
-              >
+              <div key={i} className="bg-slate-900 rounded-lg p-6 border border-slate-800 card-glow text-center">
                 <div className="text-3xl mb-2">{bench.icon}</div>
-                <div className="text-2xl font-bold text-cyan-400">
-                  {bench.value}
-                </div>
-                <div className="text-sm text-slate-400 mt-1">
-                  {bench.label}
-                </div>
+                <div className="text-2xl font-bold text-cyan-400">{bench.value}</div>
+                <div className="text-sm text-slate-400 mt-1">{bench.label}</div>
               </div>
             ))}
           </div>
@@ -214,7 +180,7 @@ function App() {
       <footer className="border-t border-slate-800 mt-16">
         <div className="max-w-7xl mx-auto px-4 py-6 text-center text-sm text-slate-500">
           <p>Pield Privacy Firewall — Ultra-light LLM Privacy Protection</p>
-          <p className="mt-1">Made by Dipanjan Dutta using hbp100</p>
+          <p className="mt-1">Built by Dipanjan Dutta using hbp100</p>
         </div>
       </footer>
     </div>
