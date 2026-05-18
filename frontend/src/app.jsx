@@ -15,9 +15,9 @@ function App() {
   const handleSubmit = async (prompt) => {
     setLoading(true)
     setError(null)
+    setResult(null)
 
     try {
-      // Send POST request to FastAPI backend
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
@@ -26,7 +26,6 @@ function App() {
         body: JSON.stringify({ prompt }),
       })
 
-      // Better error reporting
       if (!response.ok) {
         const errorText = await response.text()
         throw new Error(`HTTP ${response.status}: ${errorText}`)
@@ -73,10 +72,10 @@ function App() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
-        {/* Input */}
+        {/* Input Section */}
         <PromptInput onSubmit={handleSubmit} loading={loading} />
 
-        {/* Error */}
+        {/* Error Message */}
         {error && (
           <div className="mt-6 p-4 bg-red-900/20 border border-red-500/50 rounded-lg text-red-400 animate-slide-in">
             <div className="flex items-center space-x-2">
@@ -130,7 +129,7 @@ function App() {
               </div>
             </div>
 
-            {/* Detection Status */}
+            {/* PII Status */}
             <div
               className={`p-4 rounded-lg border ${
                 result.has_pii
@@ -163,19 +162,16 @@ function App() {
 
               <ResultCard
                 title="Raw LLM Response"
-                data={
-                  result.llm_response_masked || 'No LLM response'
-                }
+                data={result.llm_response_masked || 'No LLM response'}
                 type="llm"
               />
             </div>
 
-            {/* Restored Response */}
+            {/* Final Restored Response */}
             <ResultCard
               title="Restored Final Response"
               data={
-                result.llm_response_restored ||
-                'No restored response'
+                result.llm_response_restored || 'No restored response'
               }
               type="restored"
               fullWidth
@@ -191,31 +187,11 @@ function App() {
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
             {[
-              {
-                label: 'Package Size',
-                value: '< 350 KB',
-                icon: '📦',
-              },
-              {
-                label: 'Precision',
-                value: '100%',
-                icon: '🎯',
-              },
-              {
-                label: 'F1 Score',
-                value: '84%',
-                icon: '📊',
-              },
-              {
-                label: 'Latency',
-                value: '0.77 ms',
-                icon: '⚡',
-              },
-              {
-                label: 'Published',
-                value: 'PyPI',
-                icon: '📚',
-              },
+              { label: 'Package Size', value: '< 350 KB', icon: '📦' },
+              { label: 'Precision', value: '100%', icon: '🎯' },
+              { label: 'F1 Score', value: '84%', icon: '📊' },
+              { label: 'Latency', value: '0.77 ms', icon: '⚡' },
+              { label: 'Published', value: 'PyPI', icon: '📚' },
             ].map((bench, i) => (
               <div
                 key={i}
@@ -237,7 +213,7 @@ function App() {
       {/* Footer */}
       <footer className="border-t border-slate-800 mt-16">
         <div className="max-w-7xl mx-auto px-4 py-6 text-center text-sm text-slate-500">
-          <p>Pield Privacy Firewall - Ultra-light LLM Privacy Protection</p>
+          <p>Pield Privacy Firewall — Ultra-light LLM Privacy Protection</p>
           <p className="mt-1">Made by Dipanjan Dutta using hbp100</p>
         </div>
       </footer>
