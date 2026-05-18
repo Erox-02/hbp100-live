@@ -1,13 +1,30 @@
-{
-    "experimentalServices": {
-        "frontend": {
-            "entrypoint": "frontend",
-            "routePrefix": "/",
-            "framework": "vite"
-        },
-        "backend": {
-            "entrypoint": "backend",
-            "routePrefix": "/_/backend"
-        }
+from fastapi import FastAPI
+from pydantic import BaseModel
+from hbp100 import sanitize
+
+app = FastAPI()
+
+class PromptRequest(BaseModel):
+    prompt: str
+
+@app.get("/")
+def root():
+    return {"status": "ok"}
+
+@app.post("/api/chat")
+def chat(req: PromptRequest):
+    result = sanitize(req.prompt)
+
+    raw_response = f"I received: {result.text}"
+
+    restored = raw_response
+    for placeholder, original in result.metadata.items():
+        restored = restored.replace(placeholder, original)
+
+    return {
+        "original": req.prompt,
+        "masked": result.text,
+        "metadata": result.metadata,
+        "raw_response": raw_response,
+        "restored_response": restored,
     }
-}
