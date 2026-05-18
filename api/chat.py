@@ -1,5 +1,5 @@
 """ 
-use this one if you wanna use llm but for demo i skipped tht part and used mock response in main.py
+use this one if you wanna use llm but for demo i skipped tht part and used mock response in chat.py(for vercel)
 import os
 import re
 from typing import Dict, Any, Optional
