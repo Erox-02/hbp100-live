@@ -5,7 +5,7 @@ import MetadataViewer from './components/MetadataViewer'
 import LoadingSpinner from './components/LoadingSpinner'
 
 // Vercel exposes api/app.py at /api
-const API_URL = '/api'
+const API_URL = '/api/'
 
 function App() {
   const [loading, setLoading] = useState(false)
