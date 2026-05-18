@@ -163,7 +163,7 @@ function App() {
       <footer className="border-t border-slate-800 mt-16">
         <div className="max-w-7xl mx-auto px-4 py-6 text-center text-sm text-slate-500">
           <p>Pield Privacy Firewall - Ultra-light LLM Privacy Protection</p>
-          <p className="mt-1">Made by Erox-02,using hbp100</p>
+          <p className="mt-1">Made by Dipanjan Dutta,using hbp100</p>
         </div>
       </footer>
     </div>
