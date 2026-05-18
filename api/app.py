@@ -141,7 +141,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from hbp100 import sanitize
-
+from mangum import Mangum
 # Initialize FastAPI app
 app = FastAPI(
     title="hbp100 Privacy Firewall API",
@@ -221,3 +221,4 @@ async def health_check():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
+handler = Mangum(app)
