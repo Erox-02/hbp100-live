@@ -4,6 +4,7 @@ import ResultCard from './components/ResultCard'
 import MetadataViewer from './components/MetadataViewer'
 import LoadingSpinner from './components/LoadingSpinner'
 
+// Vercel exposes api/app.py at /api
 const API_URL = '/api'
 
 function App() {
@@ -14,20 +15,23 @@ function App() {
   const handleSubmit = async (prompt) => {
     setLoading(true)
     setError(null)
-    
+
     try {
-      const response = await fetch(`${API_URL}/chat`, {
+      // Send POST request to FastAPI backend
+      const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ prompt }),
       })
-      
+
+      // Better error reporting
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        const errorText = await response.text()
+        throw new Error(`HTTP ${response.status}: ${errorText}`)
       }
-      
+
       const data = await response.json()
       setResult(data)
     } catch (err) {
@@ -45,10 +49,15 @@ function App() {
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 to-emerald-400 rounded-lg flex items-center justify-center">
-              <svg className="w-8 h-8 text-slate-900" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+              <svg
+                className="w-8 h-8 text-slate-900"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z" />
               </svg>
             </div>
+
             <div>
               <h1 className="text-3xl font-bold">
                 <span className="gradient-text">Pield</span>
@@ -64,95 +73,161 @@ function App() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
-        {/* Input Section */}
+        {/* Input */}
         <PromptInput onSubmit={handleSubmit} loading={loading} />
 
-        {/* Error Message */}
+        {/* Error */}
         {error && (
           <div className="mt-6 p-4 bg-red-900/20 border border-red-500/50 rounded-lg text-red-400 animate-slide-in">
             <div className="flex items-center space-x-2">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"/>
+              <svg
+                className="w-5 h-5"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  clipRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                />
               </svg>
               <span>Error: {error}</span>
             </div>
           </div>
         )}
 
-        {/* Loading Spinner */}
+        {/* Loading */}
         {loading && <LoadingSpinner />}
 
-        {/* Results Section */}
+        {/* Results */}
         {result && !loading && (
           <div className="mt-8 space-y-6 animate-fade-in">
             {/* Pipeline Flow */}
             <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-800">
-              <h2 className="text-lg font-semibold text-cyan-400 mb-4">Pipeline Flow</h2>
+              <h2 className="text-lg font-semibold text-cyan-400 mb-4">
+                Pipeline Flow
+              </h2>
+
               <div className="flex flex-wrap items-center justify-center gap-4 text-sm">
-                {['User Prompt', 'Pield Sanitizer', 'Masked Prompt', 'DeepSeek API', 'Masked Response', 'Restoration', 'Final Response'].map((step, i) => (
+                {[
+                  'User Prompt',
+                  'Pield Sanitizer',
+                  'Masked Prompt',
+                  'DeepSeek API',
+                  'Masked Response',
+                  'Restoration',
+                  'Final Response',
+                ].map((step, i) => (
                   <div key={i} className="flex items-center">
-                    <span className="px-3 py-1 bg-slate-800 rounded-full text-slate-300">{step}</span>
-                    {i < 6 && <span className="text-cyan-400 mx-2">→</span>}
+                    <span className="px-3 py-1 bg-slate-800 rounded-full text-slate-300">
+                      {step}
+                    </span>
+                    {i < 6 && (
+                      <span className="text-cyan-400 mx-2">→</span>
+                    )}
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* PII Detection Status */}
-            <div className={`p-4 rounded-lg border ${
-              result.has_pii 
-                ? 'bg-amber-900/20 border-amber-500/50 text-amber-400'
-                : 'bg-emerald-900/20 border-emerald-500/50 text-emerald-400'
-            }`}>
-              <div className="flex items-center space-x-2">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  {result.has_pii ? (
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
-                  ) : (
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
-                  )}
-                </svg>
-                <span className="font-semibold">
-                  {result.has_pii ? 'PII Detected and Masked' : 'No PII Detected'}
-                </span>
-              </div>
+            {/* Detection Status */}
+            <div
+              className={`p-4 rounded-lg border ${
+                result.has_pii
+                  ? 'bg-amber-900/20 border-amber-500/50 text-amber-400'
+                  : 'bg-emerald-900/20 border-emerald-500/50 text-emerald-400'
+              }`}
+            >
+              <span className="font-semibold">
+                {result.has_pii
+                  ? 'PII Detected and Masked'
+                  : 'No PII Detected'}
+              </span>
             </div>
 
             {/* Results Grid */}
             <div className="grid gap-6 md:grid-cols-2">
-              <ResultCard title="Original Prompt" data={result.original_prompt} type="original" />
-              <ResultCard title="Masked Prompt" data={result.masked_prompt} type="masked" />
+              <ResultCard
+                title="Original Prompt"
+                data={result.original_prompt}
+                type="original"
+              />
+
+              <ResultCard
+                title="Masked Prompt"
+                data={result.masked_prompt}
+                type="masked"
+              />
+
               <MetadataViewer metadata={result.metadata} />
-              <ResultCard title="Raw LLM Response" data={result.llm_response_masked || 'No LLM response'} type="llm" />
+
+              <ResultCard
+                title="Raw LLM Response"
+                data={
+                  result.llm_response_masked || 'No LLM response'
+                }
+                type="llm"
+              />
             </div>
 
             {/* Restored Response */}
-            <ResultCard 
-              title="Restored Final Response" 
-              data={result.llm_response_restored || 'No restored response'} 
-              type="restored" 
-              fullWidth 
+            <ResultCard
+              title="Restored Final Response"
+              data={
+                result.llm_response_restored ||
+                'No restored response'
+              }
+              type="restored"
+              fullWidth
             />
           </div>
         )}
 
-        {/* Benchmark Section */}
+        {/* Benchmarks */}
         <div className="mt-16">
           <h2 className="text-2xl font-bold text-center mb-8">
             <span className="gradient-text">Benchmarks</span>
           </h2>
+
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
             {[
-              { label: 'Package Size', value: '< 350 KB', icon: '📦' },
-              { label: 'Precision', value: '100%', icon: '🎯' },
-              { label: 'F1 Score', value: '84%', icon: '📊' },
-              { label: 'Latency', value: '0.77 microseconds', icon: '⚡' },
-              { label: 'Published', value: 'PyPI', icon: '📚' },
+              {
+                label: 'Package Size',
+                value: '< 350 KB',
+                icon: '📦',
+              },
+              {
+                label: 'Precision',
+                value: '100%',
+                icon: '🎯',
+              },
+              {
+                label: 'F1 Score',
+                value: '84%',
+                icon: '📊',
+              },
+              {
+                label: 'Latency',
+                value: '0.77 ms',
+                icon: '⚡',
+              },
+              {
+                label: 'Published',
+                value: 'PyPI',
+                icon: '📚',
+              },
             ].map((bench, i) => (
-              <div key={i} className="bg-slate-900 rounded-lg p-6 border border-slate-800 card-glow text-center">
+              <div
+                key={i}
+                className="bg-slate-900 rounded-lg p-6 border border-slate-800 card-glow text-center"
+              >
                 <div className="text-3xl mb-2">{bench.icon}</div>
-                <div className="text-2xl font-bold text-cyan-400">{bench.value}</div>
-                <div className="text-sm text-slate-400 mt-1">{bench.label}</div>
+                <div className="text-2xl font-bold text-cyan-400">
+                  {bench.value}
+                </div>
+                <div className="text-sm text-slate-400 mt-1">
+                  {bench.label}
+                </div>
               </div>
             ))}
           </div>
@@ -163,7 +238,7 @@ function App() {
       <footer className="border-t border-slate-800 mt-16">
         <div className="max-w-7xl mx-auto px-4 py-6 text-center text-sm text-slate-500">
           <p>Pield Privacy Firewall - Ultra-light LLM Privacy Protection</p>
-          <p className="mt-1">Made by Dipanjan Dutta,using hbp100</p>
+          <p className="mt-1">Made by Dipanjan Dutta using hbp100</p>
         </div>
       </footer>
     </div>
