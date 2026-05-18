@@ -184,7 +184,7 @@ def restore_placeholders(text: str, metadata: Dict[str, Any]) -> str:
     return restored_text
 
 
-@app.post("/chat", response_model=ChatResponse)
+@app.post("/", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
     """Process prompt through hbp100 privacy pipeline with mock AI response."""
     try:
