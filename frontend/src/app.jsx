@@ -143,10 +143,10 @@ function App() {
           </h2>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
             {[
-              { label: 'Package Size', value: '< 200 KB', icon: '📦' },
+              { label: 'Package Size', value: '< 350 KB', icon: '📦' },
               { label: 'Precision', value: '100%', icon: '🎯' },
               { label: 'F1 Score', value: '84%', icon: '📊' },
-              { label: 'Latency', value: '~50 µs', icon: '⚡' },
+              { label: 'Latency', value: '0.77 microseconds', icon: '⚡' },
               { label: 'Published', value: 'PyPI', icon: '📚' },
             ].map((bench, i) => (
               <div key={i} className="bg-slate-900 rounded-lg p-6 border border-slate-800 card-glow text-center">
@@ -163,7 +163,7 @@ function App() {
       <footer className="border-t border-slate-800 mt-16">
         <div className="max-w-7xl mx-auto px-4 py-6 text-center text-sm text-slate-500">
           <p>Pield Privacy Firewall - Ultra-light LLM Privacy Protection</p>
-          <p className="mt-1">Your secrets never leave your local server</p>
+          <p className="mt-1">Made by Erox-02,using hbp100</p>
         </div>
       </footer>
     </div>
