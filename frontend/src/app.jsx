@@ -4,7 +4,7 @@ import ResultCard from './components/ResultCard'
 import MetadataViewer from './components/MetadataViewer'
 import LoadingSpinner from './components/LoadingSpinner'
 
-const API_URL = 'http://localhost:8000'
+const API_URL = '/api'
 
 function App() {
   const [loading, setLoading] = useState(false)
