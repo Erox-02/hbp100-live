@@ -2,11 +2,6 @@
 # 🐦 hbp100 — Hummingbird Precision 100
 
 **322KB. 0.77ms. 100% precision. Faster than you blink.**
-
-[![PyPI version](https://badge.fury.io/py/hbp100.svg)](https://pypi.org/project/hbp100/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://python.org)
-
 ---
 
 ## What is hbp100?
