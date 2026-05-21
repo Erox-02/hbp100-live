@@ -87,7 +87,7 @@ python -m uvicorn main:app --host 0.0.0.0 --port 8000
 
 # New terminal
 cd ../frontend
-npm install && npm run dev
+pnpm install && npnm run dev
 ```
 
 Open http://localhost:5173
