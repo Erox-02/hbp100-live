@@ -8,9 +8,8 @@
 
 ## Live Demo (Video)
 
-[![Demo Video](https://img.youtube.com/vi/YOUR_VIDEO_ID/0.jpg)](https://youtu.be/YOUR_VIDEO_ID)
+[![Demo Video]
 
-*Click to watch — 2 minutes. No deployment needed.*
 
 ---
 
