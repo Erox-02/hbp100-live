@@ -5,8 +5,8 @@ import MetadataViewer from './components/MetadataViewer'
 import LoadingSpinner from './components/LoadingSpinner'
 
 const API_URL = import.meta.env.DEV 
-  ? 'http://localhost:8000/'           // Local he
-  : '/api/'                             // Vercel 
+  ? 'http://localhost:8000/'           
+  : '/api/'                             
 
 function App() {
   const [loading, setLoading] = useState(false)
@@ -43,14 +43,14 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-black">
       {/* Header */}
-      <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm">
+      <header className="border-b border-neutral-800 bg-neutral-900/30 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 to-emerald-400 rounded-lg flex items-center justify-center">
+            <div className="w-12 h-12 bg-neutral-800 rounded-lg flex items-center justify-center">
               <svg
-                className="w-8 h-8 text-slate-900"
+                className="w-8 h-8 text-neutral-400"
                 fill="currentColor"
                 viewBox="0 0 24 24"
               >
@@ -60,10 +60,10 @@ function App() {
 
             <div>
               <h1 className="text-3xl font-bold">
-                <span className="gradient-text">Pield</span>
-                <span className="text-slate-100"> Privacy Firewall</span>
+                <span className="text-white">Pield</span>
+                <span className="text-neutral-400"> Privacy Firewall</span>
               </h1>
-              <p className="text-sm text-slate-400 mt-1">
+              <p className="text-sm text-neutral-500 mt-1">
                 Your secrets are masked before they ever reach the LLM
               </p>
             </div>
@@ -78,7 +78,7 @@ function App() {
 
         {/* Error Message */}
         {error && (
-          <div className="mt-6 p-4 bg-red-900/20 border border-red-500/50 rounded-lg text-red-400 animate-slide-in">
+          <div className="mt-6 p-4 bg-red-950/30 border border-red-800/50 rounded-lg text-red-400 animate-slide-in">
             <div className="flex items-center space-x-2">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path
@@ -99,8 +99,8 @@ function App() {
         {result && !loading && (
           <div className="mt-8 space-y-6 animate-fade-in">
             {/* Pipeline Flow */}
-            <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-800">
-              <h2 className="text-lg font-semibold text-cyan-400 mb-4">
+            <div className="bg-neutral-900/30 rounded-lg p-6 border border-neutral-800">
+              <h2 className="text-lg font-semibold text-neutral-300 mb-4">
                 Pipeline Flow
               </h2>
               <div className="flex flex-wrap items-center justify-center gap-4 text-sm">
@@ -114,10 +114,10 @@ function App() {
                   'Final Response',
                 ].map((step, i) => (
                   <div key={i} className="flex items-center">
-                    <span className="px-3 py-1 bg-slate-800 rounded-full text-slate-300">
+                    <span className="px-3 py-1 bg-neutral-800 rounded-full text-neutral-300">
                       {step}
                     </span>
-                    {i < 6 && <span className="text-cyan-400 mx-2">→</span>}
+                    {i < 6 && <span className="text-neutral-600 mx-2">→</span>}
                   </div>
                 ))}
               </div>
@@ -127,8 +127,8 @@ function App() {
             <div
               className={`p-4 rounded-lg border ${
                 result.has_pii
-                  ? 'bg-amber-900/20 border-amber-500/50 text-amber-400'
-                  : 'bg-emerald-900/20 border-emerald-500/50 text-emerald-400'
+                  ? 'bg-amber-950/30 border-amber-800/50 text-amber-400'
+                  : 'bg-emerald-950/30 border-emerald-800/50 text-emerald-400'
               }`}
             >
               <span className="font-semibold">
@@ -157,7 +157,7 @@ function App() {
         {/* Benchmarks */}
         <div className="mt-16">
           <h2 className="text-2xl font-bold text-center mb-8">
-            <span className="gradient-text">Benchmarks</span>
+            <span className="text-white">Benchmarks</span>
           </h2>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
             {[
@@ -167,10 +167,10 @@ function App() {
               { label: 'Latency', value: '0.77 ms', icon: '⚡' },
               { label: 'Published', value: 'PyPI', icon: '📚' },
             ].map((bench, i) => (
-              <div key={i} className="bg-slate-900 rounded-lg p-6 border border-slate-800 card-glow text-center">
+              <div key={i} className="bg-neutral-900 rounded-lg p-6 border border-neutral-800 card-glow text-center">
                 <div className="text-3xl mb-2">{bench.icon}</div>
-                <div className="text-2xl font-bold text-cyan-400">{bench.value}</div>
-                <div className="text-sm text-slate-400 mt-1">{bench.label}</div>
+                <div className="text-2xl font-bold text-neutral-200">{bench.value}</div>
+                <div className="text-sm text-neutral-500 mt-1">{bench.label}</div>
               </div>
             ))}
           </div>
@@ -178,8 +178,8 @@ function App() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800 mt-16">
-        <div className="max-w-7xl mx-auto px-4 py-6 text-center text-sm text-slate-500">
+      <footer className="border-t border-neutral-800 mt-16">
+        <div className="max-w-7xl mx-auto px-4 py-6 text-center text-sm text-neutral-600">
           <p>Pield Privacy Firewall — Ultra-light LLM Privacy Protection</p>
           <p className="mt-1">Built by Dipanjan Dutta using hbp100</p>
         </div>
