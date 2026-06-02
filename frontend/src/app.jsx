@@ -4,8 +4,10 @@ import ResultCard from './components/ResultCard'
 import MetadataViewer from './components/MetadataViewer'
 import LoadingSpinner from './components/LoadingSpinner'
 
-// Localhost only — no Vercel, no deployment headaches
-const API_URL = 'http://localhost:8000/'
+// Detect environment: localhost vs Vercel production
+const API_URL = import.meta.env.DEV 
+  ? 'http://localhost:8000/'           // Local development
+  : '/api/'                             // Vercel production (proxy to serverless function)
 
 function App() {
   const [loading, setLoading] = useState(false)
@@ -107,7 +109,7 @@ function App() {
                   'User Prompt',
                   'Pield Sanitizer',
                   'Masked Prompt',
-                  'Mock LLM',
+                  'LLM API',
                   'Masked Response',
                   'Restoration',
                   'Final Response',
@@ -140,7 +142,7 @@ function App() {
               <ResultCard title="Original Prompt" data={result.original_prompt} type="original" />
               <ResultCard title="Masked Prompt" data={result.masked_prompt} type="masked" />
               <MetadataViewer metadata={result.metadata} />
-              <ResultCard title="Mock LLM Response" data={result.llm_response_masked || 'No response'} type="llm" />
+              <ResultCard title="LLM Response (Masked)" data={result.llm_response_masked || 'No response'} type="llm" />
             </div>
 
             {/* Final Restored Response */}
