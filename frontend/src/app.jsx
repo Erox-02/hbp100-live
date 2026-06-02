@@ -4,10 +4,9 @@ import ResultCard from './components/ResultCard'
 import MetadataViewer from './components/MetadataViewer'
 import LoadingSpinner from './components/LoadingSpinner'
 
-// Detect environment: localhost vs Vercel production
 const API_URL = import.meta.env.DEV 
-  ? 'http://localhost:8000/'           // Local development
-  : '/api/'                             // Vercel production (proxy to serverless function)
+  ? 'http://localhost:8000/'           // Local he
+  : '/api/'                             // Vercel 
 
 function App() {
   const [loading, setLoading] = useState(false)
