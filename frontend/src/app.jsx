@@ -6,7 +6,7 @@ import LoadingSpinner from './components/LoadingSpinner'
 
 const API_URL = import.meta.env.DEV
 ? 'http://localhost:8000/'
-: '/api/'
+: 'https://hbp100-live-api.vercel.app/'
 
 function App() {
   const [loading, setLoading] = useState(false)
