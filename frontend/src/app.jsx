@@ -123,19 +123,6 @@ function App() {
       </div>
       </div>
 
-      {/* PII Status */}
-      <div
-      className={`p-4 rounded-lg border ${
-        result.has_pii
-        ? 'bg-red-950/30 border-red-800/50 text-red-400'
-        : 'bg-green-950/30 border-green-800/50 text-green-400'
-      }`}
-      >
-      <span className="font-semibold">
-      {result.has_pii ? '⚠️ PII Detected and Masked' : '✓ No PII Detected'}
-      </span>
-      </div>
-
       {/* Results Grid */}
       <div className="grid gap-6 md:grid-cols-2">
       <ResultCard title="Original Prompt" data={result.original_prompt} type="original" />
