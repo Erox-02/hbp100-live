@@ -1,12 +1,13 @@
 import os
 import re
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Tuple
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from hbp100 import sanitize
 from rapidfuzz import fuzz
 from openai import OpenAI
+from datetime import datetime
 
 app = FastAPI(
     title="hbp100 Privacy Firewall API",
@@ -40,7 +41,6 @@ Your role:
 The privacy firewall handles all sensitive data. You focus only on being helpful.
 Be concise, direct, and useful."""
 
-# Groq API (faster, free, no age restriction)
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 groq_client = OpenAI(
     api_key=GROQ_API_KEY,
@@ -66,13 +66,83 @@ def restore_placeholders(text: str, metadata: Dict[str, Any]) -> str:
         restored_text = restored_text.replace(placeholder, original_value)
     return restored_text
 
-# =======================================
-# FUZZY
-# =======================================
+ZODIAC_KEYWORDS = [
+    'zodiac', 'horoscope', 'star sign', 'astrological sign',
+    'sun sign', 'moon sign', 'rising sign', 'birth chart', 'what is my sign'
+]
+
+BIRTH_KEYWORDS = ['bd', 'birthday', 'born', 'birth', 'dob', 'date of birth']
+
+CALENDAR_KEYWORDS = [
+    'convert', 'calendar', 'hijri', 'bengali', 'hebrew', 'nepali',
+    'julian', 'shaka', 'gregorian', 'islamic', 'chinese', 'ethiopian', 'coptic'
+]
+
+def detect_context(text: str) -> str:
+    text_lower = text.lower()
+    
+    if any(kw in text_lower for kw in ZODIAC_KEYWORDS):
+        return "ZODIAC"
+    elif any(kw in text_lower for kw in CALENDAR_KEYWORDS):
+        return "CALENDAR"
+    elif any(kw in text_lower for kw in BIRTH_KEYWORDS):
+        return "BIRTHDAY"
+    else:
+        return "UNKNOWN"
+
+def extract_date_components(text: str) -> Dict[str, Any]:
+    result = {'day': None, 'month': None, 'year': None, 'full_match': None}
+    
+    match = re.search(r'(\d{1,2})(?:st|nd|rd|th)?\s+(\w+)\s+(\d{4})', text, re.IGNORECASE)
+    if match:
+        result['day'] = match.group(1)
+        result['month'] = match.group(2)
+        result['year'] = match.group(3)
+        result['full_match'] = match.group(0)
+        return result
+    
+    match = re.search(r'(\w+)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})', text, re.IGNORECASE)
+    if match:
+        result['month'] = match.group(1)
+        result['day'] = match.group(2)
+        result['year'] = match.group(3)
+        result['full_match'] = match.group(0)
+        return result
+    
+    match = re.search(r'(\d{4})[,.]?\s+(\w+)\s+(\d{1,2})(?:st|nd|rd|th)?', text, re.IGNORECASE)
+    if match:
+        result['year'] = match.group(1)
+        result['month'] = match.group(2)
+        result['day'] = match.group(3)
+        result['full_match'] = match.group(0)
+        return result
+    
+    match = re.search(r'\b(\d{4})\b', text)
+    if match:
+        result['year'] = match.group(1)
+        result['full_match'] = match.group(0)
+    
+    return result
+
+def should_mask_date_component(component: str, context: str) -> bool:
+    if context == "ZODIAC":
+        if component == "YEAR":
+            return True
+        else:
+            return False
+    elif context == "BIRTHDAY":
+        if component == "YEAR":
+            return True
+        else:
+            return False
+    elif context == "CALENDAR":
+        return False
+    else:
+        return component == "YEAR"
 
 COMMON_DOMAINS = ['gmail', 'yahoo', 'hotmail', 'outlook', 'protonmail', 'aol', 'icloud', 'mail']
 
-def is_email_fuzzy(word: str, threshold: int = 85) -> tuple:
+def is_email_fuzzy(word: str, threshold: int = 85) -> Tuple[bool, float]:
     if '@' not in word:
         return False, 0
     if re.match(r'[\w\.-]+@[\w\.-]+\.[a-z]{2,}', word, re.IGNORECASE):
@@ -86,7 +156,7 @@ def is_email_fuzzy(word: str, threshold: int = 85) -> tuple:
             return True, 0.75
     return False, 0
 
-def is_ssn_fuzzy(word: str) -> tuple:
+def is_ssn_fuzzy(word: str) -> Tuple[bool, float]:
     if re.match(r'\d{3}-\d{2}-\d{4}', word):
         return True, 0.95
     if re.match(r'\d{3}-\d{2}-\d{3,4}', word):
@@ -98,7 +168,7 @@ def is_ssn_fuzzy(word: str) -> tuple:
         return True, 0.80
     return False, 0
 
-def is_phone_fuzzy(word: str) -> tuple:
+def is_phone_fuzzy(word: str) -> Tuple[bool, float]:
     if re.match(r'\+?\d{1,3}[-.\s]?\d{3}[-.\s]?\d{3}[-.\s]?\d{3,4}', word):
         return True, 0.90
     if re.match(r'\b\d{10}\b', word):
@@ -108,7 +178,7 @@ def is_phone_fuzzy(word: str) -> tuple:
         return True, 0.85
     return False, 0
 
-def is_otp_fuzzy(word: str) -> tuple:
+def is_otp_fuzzy(word: str) -> Tuple[bool, float]:
     if re.match(r'\b\d{6}\b', word):
         return True, 0.95
     return False, 0
@@ -157,17 +227,13 @@ def extract_fuzzy_entities(text: str) -> list:
             continue
     return entities
 
-# ============================================================
-# LLM CALL 
-# ============================================================
-
 def call_llm(masked_prompt: str) -> str:
     if not GROQ_API_KEY or not groq_client:
         return "LLM not configured. Add GROQ_API_KEY to environment."
     
     try:
         completion = groq_client.chat.completions.create(
-            model="llama-3.1-8b-instant",  # Fastest for real-time demo
+            model="llama-3.1-8b-instant",
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": masked_prompt}
@@ -179,15 +245,57 @@ def call_llm(masked_prompt: str) -> str:
     except Exception as e:
         return f"LLM error: {str(e)}"
 
-# ============================================================
-# MAIN ENDPOINT
-# ============================================================
-
 @app.post("/", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
     try:
-        cleaned_prompt = preprocess_with_fuzzy(request.prompt)
-        result = sanitize(cleaned_prompt)
+        original_prompt = request.prompt
+        cleaned_prompt = preprocess_with_fuzzy(original_prompt)
+        
+        context = detect_context(cleaned_prompt)
+        date_info = extract_date_components(cleaned_prompt)
+        
+        masked_prompt = cleaned_prompt
+        metadata = {}
+        
+        if date_info['full_match']:
+            masked_date_parts = []
+            original_date = date_info['full_match']
+            
+            if date_info['day']:
+                if should_mask_date_component("DAY", context):
+                    masked_date_parts.append(f"[DAY_{date_info['day']}]")
+                    metadata[f"DAY_{date_info['day']}"] = date_info['day']
+                else:
+                    masked_date_parts.append(date_info['day'])
+            
+            if date_info['month']:
+                if should_mask_date_component("MONTH", context):
+                    masked_date_parts.append(f"[MONTH_{date_info['month']}]")
+                    metadata[f"MONTH_{date_info['month']}"] = date_info['month']
+                else:
+                    masked_date_parts.append(date_info['month'])
+            
+            if date_info['year']:
+                if should_mask_date_component("YEAR", context):
+                    masked_date_parts.append(f"[YEAR_{date_info['year']}]")
+                    metadata[f"YEAR_{date_info['year']}"] = date_info['year']
+                else:
+                    masked_date_parts.append(date_info['year'])
+            
+            if len(masked_date_parts) == 3:
+                if date_info['full_match'].find(date_info['year'] if date_info['year'] else '') < date_info['full_match'].find(date_info['day'] if date_info['day'] else ''):
+                    masked_date = f"{masked_date_parts[0]} {masked_date_parts[1]} {masked_date_parts[2]}"
+                else:
+                    masked_date = f"{masked_date_parts[1]} {masked_date_parts[0]} {masked_date_parts[2]}"
+            elif len(masked_date_parts) == 1:
+                masked_date = masked_date_parts[0]
+            else:
+                masked_date = original_date
+            
+            masked_prompt = masked_prompt.replace(original_date, masked_date)
+        
+        result = sanitize(masked_prompt)
+        result.metadata.update(metadata)
         
         fuzzy_entities = extract_fuzzy_entities(cleaned_prompt)
         if fuzzy_entities and not result.has_pii:
@@ -199,12 +307,12 @@ async def chat_endpoint(request: ChatRequest):
         restored_response = restore_placeholders(llm_response_masked, result.metadata)
         
         return ChatResponse(
-            original_prompt=request.prompt,
+            original_prompt=original_prompt,
             masked_prompt=result.text,
             metadata=result.metadata,
             llm_response_masked=llm_response_masked,
             llm_response_restored=restored_response,
-            has_pii=result.has_pii or len(fuzzy_entities) > 0
+            has_pii=result.has_pii or len(fuzzy_entities) > 0 or len(metadata) > 0
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
