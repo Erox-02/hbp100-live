@@ -11,9 +11,11 @@ function PromptInput({ onSubmit, loading }) {
   }
 
   const examplePrompts = [
-    "My email is john@gmail.com and my OTP is 123456",
-    "Contact me at +1-555-0123 or sarah@company.com",
-    "My credit card is 4111-1111-1111-1111 and SSN is 123-45-6789"
+    "My birthday is 14th August 2009. What's my zodiac sign?",
+    "I was born on 23 March 1995. Tell me my horoscope.",
+    "Convert 15 June 2024 to Hijri calendar",
+    "My email is john@gmail.com and SSN is 123-45-6789",
+    "What's the weather like today?"
   ]
 
   return (
@@ -26,19 +28,19 @@ function PromptInput({ onSubmit, loading }) {
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Type a prompt containing sensitive information..."
+          placeholder="Type a prompt containing sensitive information or ask about zodiac..."
           className="w-full h-32 px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-gray-200 placeholder-gray-600 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors resize-none"
           disabled={loading}
         />
 
-        <div className="flex items-center justify-between mt-4">
-          <div className="flex space-x-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mt-4 gap-3 sm:gap-0">
+          <div className="flex flex-wrap gap-2">
             {examplePrompts.map((example, i) => (
               <button
                 key={i}
                 type="button"
                 onClick={() => setPrompt(example)}
-                className="px-3 py-1 text-xs bg-gray-800 border border-gray-700 rounded-lg text-gray-500 hover:border-gray-500 hover:text-gray-300 transition-colors"
+                className="px-3 py-1 text-xs bg-gray-800 border border-gray-700 rounded-lg text-gray-400 hover:border-gray-500 hover:text-gray-200 transition-colors"
                 disabled={loading}
               >
                 Example {i + 1}
