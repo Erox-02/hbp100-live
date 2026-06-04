@@ -11,11 +11,9 @@ function PromptInput({ onSubmit, loading }) {
   }
 
   const examplePrompts = [
-    "My birthday is 14th August 2009. What's my zodiac sign?",
-    "I was born on 23 March 1995. Tell me my horoscope.",
-    "Convert 15 June 2024 to Hijri calendar",
-    "My email is john@gmail.com and SSN is 123-45-6789",
-    "What's the weather like today?"
+    "I was born on 23 March 1995.",
+    "Convert 15 June 2024 to bengali calander calendar",
+    "My email is john@gamil.com , how to access my spam in gmail??",
   ]
 
   return (
