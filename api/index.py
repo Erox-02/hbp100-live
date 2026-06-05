@@ -29,7 +29,7 @@ app.add_middleware(
 
 SYSTEM_PROMPT = """You are a helpful AI assistant integrated with a privacy firewall.
 
-IMPORTANT RULES:
+CRITICAL RULES:
 1. The user's message contains placeholders like [EMAIL_1], [PHONE_1], [YEAR_1], [DAY_1], [MONTH_1].
 2. YOU MUST USE THE SAME PLACEHOLDERS IN YOUR RESPONSE. Do not ignore them. Do not remove them.
 3. Treat placeholders as if they are the actual values.
@@ -53,6 +53,7 @@ groq_client = OpenAI(
 
 class ChatRequest(BaseModel):
     prompt: str
+    use_real_llm: bool = False
 
 class ChatResponse(BaseModel):
     original_prompt: str
@@ -280,6 +281,12 @@ def call_llm(masked_prompt: str) -> str:
     except Exception as e:
         return f"LLM error: {str(e)}"
 
+def get_mock_response(result, masked_prompt: str) -> str:
+    if result.has_pii:
+        return f"[MOCK] I received your message. Detected and masked sensitive information. Here's what I see: {masked_prompt}"
+    else:
+        return f"[MOCK] Your message is clean. Here's what you said: {masked_prompt}"
+
 @app.post("/", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
     try:
@@ -343,7 +350,11 @@ async def chat_endpoint(request: ChatRequest):
                 placeholder = f"{entity['type']}_FUZZY_{entity['confidence']}"
                 result.metadata[placeholder] = entity['value']
         
-        llm_response_masked = call_llm(result.text)
+        if request.use_real_llm:
+            llm_response_masked = call_llm(result.text)
+        else:
+            llm_response_masked = get_mock_response(result, result.text)
+        
         restored_response = restore_placeholders(llm_response_masked, result.metadata)
         
         return ChatResponse(
