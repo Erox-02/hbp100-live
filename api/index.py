@@ -7,7 +7,6 @@ from pydantic import BaseModel
 from hbp100 import sanitize
 from rapidfuzz import fuzz
 from openai import OpenAI
-from datetime import datetime
 
 app = FastAPI(
     title="hbp100 Privacy Firewall API",
@@ -33,21 +32,16 @@ SYSTEM_PROMPT = """You are a helpful AI assistant integrated with a privacy fire
 IMPORTANT RULES:
 1. The user's message contains placeholders like [EMAIL_1], [PHONE_1], [YEAR_1], [DAY_1], [MONTH_1].
 2. YOU MUST USE THE SAME PLACEHOLDERS IN YOUR RESPONSE. Do not ignore them. Do not remove them.
-3. Treat placeholders as if they are the actual values. For example, [EMAIL_1] means "the user's email address".
+3. Treat placeholders as if they are the actual values.
 4. NEVER ask for the original value behind a placeholder.
 5. NEVER say you don't have enough information because of placeholders.
 6. Answer naturally using the placeholders as if they are real values.
-7. For zodiac questions: use the day and month to calculate the zodiac sign. The year is optional.
-8. For birthday questions: acknowledge the birthday but don't ask for more details.
-9. Be concise and direct. 2-3 sentences max.
+7. For zodiac questions: use the day and month to calculate the zodiac sign.
+8. Be concise and direct. 2-3 sentences max.
 
 Example:
 User: "What's my zodiac? I was born on [DAY_1] [MONTH_1]"
 Assistant: "Based on [DAY_1] [MONTH_1], your zodiac sign is Leo."
-
-Example 2:
-User: "Email [EMAIL_1] for support"
-Assistant: "I've sent a support request to [EMAIL_1]."
 
 The privacy firewall handles all sensitive data. You focus only on being helpful."""
 
@@ -87,6 +81,34 @@ CALENDAR_KEYWORDS = [
     'convert', 'calendar', 'hijri', 'bengali', 'hebrew', 'nepali',
     'julian', 'shaka', 'gregorian', 'islamic', 'chinese', 'ethiopian', 'coptic'
 ]
+
+_year_counter = 1
+_month_counter = 1
+_day_counter = 1
+
+def get_year_placeholder():
+    global _year_counter
+    placeholder = f"[YEAR_{_year_counter}]"
+    _year_counter += 1
+    return placeholder
+
+def get_month_placeholder():
+    global _month_counter
+    placeholder = f"[MONTH_{_month_counter}]"
+    _month_counter += 1
+    return placeholder
+
+def get_day_placeholder():
+    global _day_counter
+    placeholder = f"[DAY_{_day_counter}]"
+    _day_counter += 1
+    return placeholder
+
+def reset_counters():
+    global _year_counter, _month_counter, _day_counter
+    _year_counter = 1
+    _month_counter = 1
+    _day_counter = 1
 
 def detect_context(text: str) -> str:
     text_lower = text.lower()
@@ -143,15 +165,9 @@ def extract_date_components(text: str) -> Dict[str, Any]:
 
 def should_mask_date_component(component: str, context: str) -> bool:
     if context == "ZODIAC":
-        if component == "YEAR":
-            return True
-        else:
-            return False
+        return component == "YEAR"
     elif context == "BIRTHDAY":
-        if component == "YEAR":
-            return True
-        else:
-            return False
+        return component == "YEAR"
     elif context == "CALENDAR":
         return False
     else:
@@ -267,6 +283,8 @@ def call_llm(masked_prompt: str) -> str:
 @app.post("/", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
     try:
+        reset_counters()
+        
         original_prompt = request.prompt
         cleaned_prompt = preprocess_with_fuzzy(original_prompt)
         
@@ -282,22 +300,25 @@ async def chat_endpoint(request: ChatRequest):
             
             if date_info['day']:
                 if should_mask_date_component("DAY", context):
-                    masked_date_parts.append(f"[DAY_{date_info['day']}]")
-                    metadata[f"DAY_{date_info['day']}"] = date_info['day']
+                    placeholder = get_day_placeholder()
+                    masked_date_parts.append(placeholder)
+                    metadata[placeholder] = date_info['day']
                 else:
                     masked_date_parts.append(date_info['day'])
             
             if date_info['month']:
                 if should_mask_date_component("MONTH", context):
-                    masked_date_parts.append(f"[MONTH_{date_info['month']}]")
-                    metadata[f"MONTH_{date_info['month']}"] = date_info['month']
+                    placeholder = get_month_placeholder()
+                    masked_date_parts.append(placeholder)
+                    metadata[placeholder] = date_info['month']
                 else:
                     masked_date_parts.append(date_info['month'])
             
             if date_info['year']:
                 if should_mask_date_component("YEAR", context):
-                    masked_date_parts.append(f"[YEAR_{date_info['year']}]")
-                    metadata[f"YEAR_{date_info['year']}"] = date_info['year']
+                    placeholder = get_year_placeholder()
+                    masked_date_parts.append(placeholder)
+                    metadata[placeholder] = date_info['year']
                 else:
                     masked_date_parts.append(date_info['year'])
             
