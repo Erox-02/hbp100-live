@@ -31,18 +31,23 @@ app.add_middleware(
 SYSTEM_PROMPT = """You are a helpful AI assistant integrated with a privacy firewall.
 
 IMPORTANT RULES:
-1. The user's message may contain placeholders like [EMAIL_1], [PHONE_1], [YEAR_1], [DAY_1], [MONTH_1].
-2. Treat these placeholders as if they are the actual values. For example, [EMAIL_1] means "the user's email address".
-3. NEVER ask for the original value behind a placeholder.
-4. NEVER say you don't have enough information because of placeholders.
-5. Answer naturally as if you see the real information.
-6. For zodiac questions: use the day and month to calculate the zodiac sign. The year is optional.
-7. For birthday questions: acknowledge the birthday but don't ask for more details.
-8. Be concise and direct. 2-3 sentences max.
+1. The user's message contains placeholders like [EMAIL_1], [PHONE_1], [YEAR_1], [DAY_1], [MONTH_1].
+2. YOU MUST USE THE SAME PLACEHOLDERS IN YOUR RESPONSE. Do not ignore them. Do not remove them.
+3. Treat placeholders as if they are the actual values. For example, [EMAIL_1] means "the user's email address".
+4. NEVER ask for the original value behind a placeholder.
+5. NEVER say you don't have enough information because of placeholders.
+6. Answer naturally using the placeholders as if they are real values.
+7. For zodiac questions: use the day and month to calculate the zodiac sign. The year is optional.
+8. For birthday questions: acknowledge the birthday but don't ask for more details.
+9. Be concise and direct. 2-3 sentences max.
 
 Example:
 User: "What's my zodiac? I was born on [DAY_1] [MONTH_1]"
 Assistant: "Based on [DAY_1] [MONTH_1], your zodiac sign is Leo."
+
+Example 2:
+User: "Email [EMAIL_1] for support"
+Assistant: "I've sent a support request to [EMAIL_1]."
 
 The privacy firewall handles all sensitive data. You focus only on being helpful."""
 
@@ -98,6 +103,13 @@ def detect_context(text: str) -> str:
 def extract_date_components(text: str) -> Dict[str, Any]:
     result = {'day': None, 'month': None, 'year': None, 'full_match': None}
     
+    if re.search(r'\b\d{3}-\d{2}-\d{4}\b', text):
+        return result
+    if re.search(r'\b\d{4}-\d{4}-\d{4}\b', text):
+        return result
+    if re.search(r'\b\d{3}-\d{3}-\d{4}\b', text):
+        return result
+    
     match = re.search(r'(\d{1,2})(?:st|nd|rd|th)?\s+(\w+)\s+(\d{4})', text, re.IGNORECASE)
     if match:
         result['day'] = match.group(1)
@@ -122,10 +134,10 @@ def extract_date_components(text: str) -> Dict[str, Any]:
         result['full_match'] = match.group(0)
         return result
     
-    match = re.search(r'\b(\d{4})\b', text)
-    if match:
-        result['year'] = match.group(1)
-        result['full_match'] = match.group(0)
+    year_match = re.search(r'\b(19|20)\d{2}\b', text)
+    if year_match and not re.search(r'\d{4}-\d{4}', text):
+        result['year'] = year_match.group(0)
+        result['full_match'] = result['year']
     
     return result
 
@@ -162,15 +174,17 @@ def is_email_fuzzy(word: str, threshold: int = 85) -> Tuple[bool, float]:
     return False, 0
 
 def is_ssn_fuzzy(word: str) -> Tuple[bool, float]:
-    if re.match(r'\d{3}-\d{2}-\d{4}', word):
+    if re.match(r'^\d{3}-\d{2}-\d{4}$', word):
         return True, 0.95
-    if re.match(r'\d{3}-\d{2}-\d{3,4}', word):
+    if re.match(r'^\d{3}-\d{2}-\d{3,4}$', word):
         return True, 0.70
+    if word.count('-') > 2:
+        return False, 0
     cleaned = re.sub(r'[^0-9]', '', word)
-    if len(cleaned) == 9:
-        return True, 0.85
-    if re.match(r'\b\d{9}\b', word):
+    if len(cleaned) == 9 and word.count('-') <= 2:
         return True, 0.80
+    if re.match(r'^\d{9}$', word):
+        return True, 0.85
     return False, 0
 
 def is_phone_fuzzy(word: str) -> Tuple[bool, float]:
