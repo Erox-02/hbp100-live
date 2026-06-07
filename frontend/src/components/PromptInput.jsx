@@ -11,8 +11,8 @@ function PromptInput({ onSubmit, loading }) {
   }
 
   const examplePrompts = [
-    "I was born on 23 March 1995.",
-    "Convert 15 June 2024 to bengali calander calendar",
+    "I was born on 23rd March 1995.",
+    "Convert 15 June 2024 to hijri calander calendar",
     "My email is john@gamil.com , how to access my spam in gmail??",
   ]
 
