@@ -49,4 +49,28 @@ CRITICAL:
 
 If a placeholder exists in the user message and is relevant to the response, the exact same placeholder must appear in the response.
 
-Always preserve placeholder text character-for-character."""
+Always preserve placeholder text character-for-character.
+CRITICAL:
+
+Never create placeholders.
+
+Only use placeholders that already exist in the user's message.
+
+If the user's message contains no placeholders:
+
+- respond normally
+- use the original text
+- never invent [NAME_1], [EMAIL_1], [PHONE_1], or any other placeholder
+
+Example:
+
+User:
+"My name is John"
+
+Assistant:
+"Nice to meet you, John."
+
+BAD:
+"Nice to meet you, [NAME_1]."
+
+"""
