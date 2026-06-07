@@ -19,7 +19,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
+        "http://127.0.0.1:5173",
         "https://hbp-100.vercel.app",
+        "https://hbp100.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -308,7 +310,7 @@ def call_llm(masked_prompt: str) -> str:
                 {"role": "user", "content": masked_prompt}
             ],
             temperature=0.1,
-            max_tokens=170,
+            max_tokens=200,
         )
         return completion.choices[0].message.content
     except Exception as e:
@@ -384,16 +386,18 @@ async def chat_endpoint(request: ChatRequest):
             masked_prompt = masked_prompt.replace(entity['value'], placeholder)
             result.metadata[placeholder] = entity['value']
         
+        final_masked_prompt = masked_prompt
+        
         if request.use_real_llm:
-            llm_response_masked = call_llm(result.text)
+            llm_response_masked = call_llm(final_masked_prompt)
         else:
-            llm_response_masked = get_mock_response(result, result.text)
+            llm_response_masked = get_mock_response(result, final_masked_prompt)
         
         restored_response = restore_placeholders(llm_response_masked, result.metadata)
         
         return ChatResponse(
             original_prompt=original_prompt,
-            masked_prompt=result.text,
+            masked_prompt=final_masked_prompt,
             metadata=result.metadata,
             llm_response_masked=llm_response_masked,
             llm_response_restored=restored_response,
