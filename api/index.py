@@ -253,13 +253,13 @@ def call_llm(masked_prompt: str) -> str:
     
     try:
         completion = groq_client.chat.completions.create(
-            model="gemma2-9b-it",
+            model="meta-llama/llama-4-scout-17b-16e-instruct",
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": masked_prompt}
             ],
             temperature=0.1,
-            max_tokens=300,
+            max_tokens=200,
         )
         return completion.choices[0].message.content
     except Exception as e:
