@@ -12,7 +12,7 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
-  const [useRealLLM, setUseRealLLM] = useState(false)
+  const [useRealLLM, setUseRealLLM] = useState(true)  
 
   const handleSubmit = async (prompt) => {
     setLoading(true)
@@ -69,7 +69,7 @@ function App() {
                 </p>
               </div>
             </div>
-            {/* Beta Toggle Button */}
+            {/* Mode Toggle Button - BETA is default */}
             <button
               onClick={() => setUseRealLLM(!useRealLLM)}
               className={`px-3 py-1.5 text-xs sm:text-sm rounded-lg transition-all duration-200 font-medium ${
@@ -89,14 +89,14 @@ function App() {
         {/* Input Section */}
         <PromptInput onSubmit={handleSubmit} loading={loading} />
 
-        {/* Beta Mode Indicator (when active) */}
-        {useRealLLM && (
-          <div className="mt-4 p-2 bg-yellow-600/10 border border-yellow-500/30 rounded-lg text-center">
-            <p className="text-xs text-yellow-400">
-               BETA MODE: Using real Groq LLM. Responses may vary. Toggle off for consistent mock responses.
-            </p>
-          </div>
-        )}
+        {/* BETA Mode Indicator (always visible since it's default) */}
+        <div className="mt-4 p-2 bg-yellow-600/10 border border-yellow-500/30 rounded-lg text-center">
+          <p className="text-xs text-yellow-400">
+            {useRealLLM 
+              ? '⚠️ BETA MODE: Using real Groq LLM. Responses may vary. Toggle off for consistent mock responses.'
+              : '✓ MOCK MODE: Using simulated responses. Toggle on for real Groq LLM (BETA).'}
+          </p>
+        </div>
 
         {/* Error Message */}
         {error && (
