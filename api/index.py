@@ -308,7 +308,7 @@ def call_llm(masked_prompt: str) -> str:
                 {"role": "user", "content": masked_prompt}
             ],
             temperature=0.1,
-            max_tokens=200,
+            max_tokens=170,
         )
         return completion.choices[0].message.content
     except Exception as e:
