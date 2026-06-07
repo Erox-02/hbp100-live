@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from hbp100 import sanitize
 from rapidfuzz import fuzz
 from openai import OpenAI
-from prompt import SYSTEM_PROMPT  
+from prompt import SYSTEM_PROMPT
 
 app = FastAPI(
     title="hbp100 Privacy Firewall API",
@@ -19,15 +19,12 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "http://127.0.0.1:5173",
         "https://hbp-100.vercel.app",
-        "https://hbp100.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 groq_client = OpenAI(
@@ -67,33 +64,91 @@ CALENDAR_KEYWORDS = [
     'julian', 'shaka', 'gregorian', 'islamic', 'chinese', 'ethiopian', 'coptic'
 ]
 
-_year_counter = 1
-_month_counter = 1
-_day_counter = 1
+PHONE_KEYWORDS = ['phone', 'mobile', 'call', 'contact', 'number', 'whatsapp', 'nearby', 'tel', 'cell', 'dial']
+OTP_KEYWORDS = ['otp', 'verification', 'login', 'code', 'sms', 'auth', '2fa', 'one-time', 'passcode', 'verify']
 
-def get_year_placeholder():
-    global _year_counter
-    placeholder = f"[YEAR_{_year_counter}]"
-    _year_counter += 1
+def has_context_keyword(text: str, keywords: list) -> bool:
+    text_lower = text.lower()
+    for keyword in keywords:
+        if re.search(rf'\b{keyword}\b', text_lower):
+            return True
+    return False
+
+def is_likely_phone(word: str, full_context: str) -> Tuple[bool, float]:
+    cleaned = re.sub(r'[^0-9]', '', word)
+    if len(cleaned) == 10:
+        if has_context_keyword(full_context, PHONE_KEYWORDS):
+            return True, 0.85
+        else:
+            return False, 0
+    return False, 0
+
+def is_likely_otp(word: str, full_context: str) -> Tuple[bool, float]:
+    if re.match(r'^\d{6}$', word):
+        if has_context_keyword(full_context, OTP_KEYWORDS):
+            return True, 0.90
+        else:
+            return False, 0
+    return False, 0
+
+def is_likely_ssn(word: str, full_context: str) -> Tuple[bool, float]:
+    if re.match(r'^\d{3}-\d{2}-\d{4}$', word):
+        return True, 0.95
+    
+    if word.count('-') > 2:
+        return False, 0
+    
+    cleaned = re.sub(r'[^0-9]', '', word)
+    if len(cleaned) == 9:
+        if has_context_keyword(full_context, ['ssn', 'social security', 'tax id', 'federal id']):
+            return True, 0.80
+        return False, 0
+    return False, 0
+
+class RequestCounters:
+    def __init__(self):
+        self.year = 1
+        self.month = 1
+        self.day = 1
+        self.email = 1
+        self.phone = 1
+        self.otp = 1
+        self.ssn = 1
+
+def get_email_placeholder(counters):
+    placeholder = f"[EMAIL_{counters.email}]"
+    counters.email += 1
     return placeholder
 
-def get_month_placeholder():
-    global _month_counter
-    placeholder = f"[MONTH_{_month_counter}]"
-    _month_counter += 1
+def get_phone_placeholder(counters):
+    placeholder = f"[PHONE_{counters.phone}]"
+    counters.phone += 1
     return placeholder
 
-def get_day_placeholder():
-    global _day_counter
-    placeholder = f"[DAY_{_day_counter}]"
-    _day_counter += 1
+def get_otp_placeholder(counters):
+    placeholder = f"[OTP_{counters.otp}]"
+    counters.otp += 1
     return placeholder
 
-def reset_counters():
-    global _year_counter, _month_counter, _day_counter
-    _year_counter = 1
-    _month_counter = 1
-    _day_counter = 1
+def get_ssn_placeholder(counters):
+    placeholder = f"[SSN_{counters.ssn}]"
+    counters.ssn += 1
+    return placeholder
+
+def get_year_placeholder(counters):
+    placeholder = f"[YEAR_{counters.year}]"
+    counters.year += 1
+    return placeholder
+
+def get_month_placeholder(counters):
+    placeholder = f"[MONTH_{counters.month}]"
+    counters.month += 1
+    return placeholder
+
+def get_day_placeholder(counters):
+    placeholder = f"[DAY_{counters.day}]"
+    counters.day += 1
+    return placeholder
 
 def detect_context(text: str) -> str:
     text_lower = text.lower()
@@ -165,6 +220,7 @@ def is_email_fuzzy(word: str, threshold: int = 85) -> Tuple[bool, float]:
         return False, 0
     if re.match(r'[\w\.-]+@[\w\.-]+\.[a-z]{2,}', word, re.IGNORECASE):
         return True, 0.95
+    
     parts = word.split('@')
     if len(parts) != 2:
         return False, 0
@@ -174,77 +230,70 @@ def is_email_fuzzy(word: str, threshold: int = 85) -> Tuple[bool, float]:
             return True, 0.75
     return False, 0
 
-def is_ssn_fuzzy(word: str) -> Tuple[bool, float]:
+def is_ssn_fuzzy(word: str, full_context: str) -> Tuple[bool, float]:
     if re.match(r'^\d{3}-\d{2}-\d{4}$', word):
         return True, 0.95
-    if re.match(r'^\d{3}-\d{2}-\d{3,4}$', word):
-        return True, 0.70
+    
     if word.count('-') > 2:
         return False, 0
+    
     cleaned = re.sub(r'[^0-9]', '', word)
-    if len(cleaned) == 9 and word.count('-') <= 2:
-        return True, 0.80
-    if re.match(r'^\d{9}$', word):
-        return True, 0.85
+    if len(cleaned) == 9:
+        if has_context_keyword(full_context, ['ssn', 'social security', 'tax id', 'federal id']):
+            return True, 0.80
+        return False, 0
     return False, 0
 
-def is_phone_fuzzy(word: str) -> Tuple[bool, float]:
-    if re.match(r'\+?\d{1,3}[-.\s]?\d{3}[-.\s]?\d{3}[-.\s]?\d{3,4}', word):
-        return True, 0.90
-    if re.match(r'\b\d{10}\b', word):
-        return True, 0.85
+def is_phone_fuzzy(word: str, full_context: str) -> Tuple[bool, float]:
     cleaned = re.sub(r'[^0-9]', '', word)
     if len(cleaned) == 10:
-        return True, 0.85
+        if has_context_keyword(full_context, PHONE_KEYWORDS):
+            return True, 0.85
+        return False, 0
     return False, 0
 
-def is_otp_fuzzy(word: str) -> Tuple[bool, float]:
-    if re.match(r'\b\d{6}\b', word):
-        return True, 0.95
+def is_otp_fuzzy(word: str, full_context: str) -> Tuple[bool, float]:
+    if re.match(r'^\d{6}$', word):
+        if has_context_keyword(full_context, OTP_KEYWORDS):
+            return True, 0.90
+        return False, 0
     return False, 0
 
 def preprocess_with_fuzzy(text: str) -> str:
-    words = text.split()
-    corrected_words = []
-    for word in words:
-        is_email, conf = is_email_fuzzy(word)
-        if is_email and conf < 0.9 and '@' in word:
-            parts = word.split('@')
-            if len(parts) == 2:
-                domain_part = parts[1].split('.')[0] if '.' in parts[1] else parts[1]
-                for known in COMMON_DOMAINS:
-                    if fuzz.ratio(domain_part.lower(), known) > 85:
-                        corrected_domain = known + (parts[1][len(domain_part):] if len(parts[1]) > len(domain_part) else '.com')
-                        corrected_words.append(parts[0] + '@' + corrected_domain)
-                        break
-                else:
-                    corrected_words.append(word)
-            else:
-                corrected_words.append(word)
-        else:
-            corrected_words.append(word)
-    return ' '.join(corrected_words)
+    return text
 
-def extract_fuzzy_entities(text: str) -> list:
+def extract_fuzzy_entities(text: str, counters, existing_pii_detected: bool) -> list:
+    if existing_pii_detected:
+        return []
+    
     entities = []
     words = re.findall(r'\S+', text)
+    
     for word in words:
         is_email, conf = is_email_fuzzy(word)
         if is_email:
-            entities.append({'type': 'EMAIL', 'value': word, 'confidence': conf})
+            placeholder = get_email_placeholder(counters)
+            entities.append({'type': 'EMAIL', 'value': word, 'confidence': conf, 'placeholder': placeholder})
             continue
-        is_ssn, conf = is_ssn_fuzzy(word)
+        
+        is_ssn, conf = is_ssn_fuzzy(word, text)
         if is_ssn:
-            entities.append({'type': 'SSN', 'value': word, 'confidence': conf})
+            placeholder = get_ssn_placeholder(counters)
+            entities.append({'type': 'SSN', 'value': word, 'confidence': conf, 'placeholder': placeholder})
             continue
-        is_phone, conf = is_phone_fuzzy(word)
+        
+        is_phone, conf = is_phone_fuzzy(word, text)
         if is_phone:
-            entities.append({'type': 'PHONE', 'value': word, 'confidence': conf})
+            placeholder = get_phone_placeholder(counters)
+            entities.append({'type': 'PHONE', 'value': word, 'confidence': conf, 'placeholder': placeholder})
             continue
-        is_otp, conf = is_otp_fuzzy(word)
+        
+        is_otp, conf = is_otp_fuzzy(word, text)
         if is_otp:
-            entities.append({'type': 'OTP', 'value': word, 'confidence': conf})
+            placeholder = get_otp_placeholder(counters)
+            entities.append({'type': 'OTP', 'value': word, 'confidence': conf, 'placeholder': placeholder})
             continue
+    
     return entities
 
 def call_llm(masked_prompt: str) -> str:
@@ -274,7 +323,7 @@ def get_mock_response(result, masked_prompt: str) -> str:
 @app.post("/", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
     try:
-        reset_counters()
+        counters = RequestCounters()
         
         original_prompt = request.prompt
         cleaned_prompt = preprocess_with_fuzzy(original_prompt)
@@ -291,7 +340,7 @@ async def chat_endpoint(request: ChatRequest):
             
             if date_info['day']:
                 if should_mask_date_component("DAY", context):
-                    placeholder = get_day_placeholder()
+                    placeholder = get_day_placeholder(counters)
                     masked_date_parts.append(placeholder)
                     metadata[placeholder] = date_info['day']
                 else:
@@ -299,7 +348,7 @@ async def chat_endpoint(request: ChatRequest):
             
             if date_info['month']:
                 if should_mask_date_component("MONTH", context):
-                    placeholder = get_month_placeholder()
+                    placeholder = get_month_placeholder(counters)
                     masked_date_parts.append(placeholder)
                     metadata[placeholder] = date_info['month']
                 else:
@@ -307,7 +356,7 @@ async def chat_endpoint(request: ChatRequest):
             
             if date_info['year']:
                 if should_mask_date_component("YEAR", context):
-                    placeholder = get_year_placeholder()
+                    placeholder = get_year_placeholder(counters)
                     masked_date_parts.append(placeholder)
                     metadata[placeholder] = date_info['year']
                 else:
@@ -328,11 +377,12 @@ async def chat_endpoint(request: ChatRequest):
         result = sanitize(masked_prompt)
         result.metadata.update(metadata)
         
-        fuzzy_entities = extract_fuzzy_entities(cleaned_prompt)
-        if fuzzy_entities and not result.has_pii:
-            for entity in fuzzy_entities:
-                placeholder = f"{entity['type']}_FUZZY_{entity['confidence']}"
-                result.metadata[placeholder] = entity['value']
+        fuzzy_entities = extract_fuzzy_entities(cleaned_prompt, counters, result.has_pii)
+        
+        for entity in fuzzy_entities:
+            placeholder = entity['placeholder']
+            masked_prompt = masked_prompt.replace(entity['value'], placeholder)
+            result.metadata[placeholder] = entity['value']
         
         if request.use_real_llm:
             llm_response_masked = call_llm(result.text)
