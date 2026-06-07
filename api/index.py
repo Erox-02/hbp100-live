@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from hbp100 import sanitize
 from rapidfuzz import fuzz
 from openai import OpenAI
+from prompt import SYSTEM_PROMPT  
 
 app = FastAPI(
     title="hbp100 Privacy Firewall API",
@@ -27,23 +28,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-SYSTEM_PROMPT = """You are a helpful AI assistant integrated with a privacy firewall.
-
-CRITICAL RULES:
-1. The user's message contains placeholders like [EMAIL_1], [PHONE_1], [YEAR_1], [DAY_1], [MONTH_1].
-2. YOU MUST USE THE SAME PLACEHOLDERS IN YOUR RESPONSE. Do not ignore them. Do not remove them.
-3. Treat placeholders as if they are the actual values.
-4. NEVER ask for the original value behind a placeholder.
-5. NEVER say you don't have enough information because of placeholders.
-6. Answer naturally using the placeholders as if they are real values.
-7. For zodiac questions: use the day and month to calculate the zodiac sign.
-8. Be concise and direct. 2-3 sentences max.
-
-Example:
-User: "What's my zodiac? I was born on [DAY_1] [MONTH_1]"
-Assistant: "Based on [DAY_1] [MONTH_1], your zodiac sign is Leo."
-
-The privacy firewall handles all sensitive data. You focus only on being helpful."""
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 groq_client = OpenAI(
@@ -168,7 +152,7 @@ def should_mask_date_component(component: str, context: str) -> bool:
     if context == "ZODIAC":
         return component == "YEAR"
     elif context == "BIRTHDAY":
-        return component == "YEAR"
+        return True
     elif context == "CALENDAR":
         return False
     else:
