@@ -332,12 +332,11 @@ def validate_placeholders(response: str, metadata: Dict[str, Any], is_mock: bool
     if is_mock:
         return response
     
-    pattern = r'\[(EMAIL|PHONE|OTP|SSN|YEAR|MONTH|DAY)_[0-9]+\]'
+    pattern = r'\[(?:EMAIL|PHONE|OTP|SSN|YEAR|MONTH|DAY)_[0-9]+\]'
     placeholders = re.findall(pattern, response)
     for ph in placeholders:
-        full_ph = f"[{ph}]"
-        if full_ph not in metadata:
-            return f"[ERROR: Hallucinated placeholder {full_ph} detected. The LLM invented a placeholder that wasn't in the allowed list: {list(metadata.keys())}]"
+        if ph not in metadata:
+            return f"[ERROR: Hallucinated placeholder {ph} detected. The LLM invented a placeholder that wasn't in the allowed list: {list(metadata.keys())}]"
     return response
 
 class MockResult:
@@ -404,6 +403,14 @@ async def chat_endpoint(request: ChatRequest):
             
             masked_prompt = masked_prompt.replace(original_date, masked_date)
         
+        fuzzy_entities = extract_fuzzy_entities(cleaned_prompt, counters, detected_values)
+        
+        for entity in fuzzy_entities:
+            placeholder = entity['placeholder']
+            masked_prompt = replace_first_occurrence(masked_prompt, entity['value'], placeholder)
+            metadata[placeholder] = entity['value']
+            detected_values.add(entity['value'])
+        
         if request.use_privacy:
             result = sanitize(masked_prompt)
             result.metadata.update(metadata)
@@ -414,17 +421,6 @@ async def chat_endpoint(request: ChatRequest):
                 metadata=metadata,
                 has_pii=False
             )
-        
-        for value in result.metadata.values():
-            detected_values.add(str(value))
-        
-        fuzzy_entities = extract_fuzzy_entities(masked_prompt, counters, detected_values)
-        
-        for entity in fuzzy_entities:
-            placeholder = entity['placeholder']
-            masked_prompt = replace_first_occurrence(masked_prompt, entity['value'], placeholder)
-            result.metadata[placeholder] = entity['value']
-            detected_values.add(entity['value'])
         
         final_masked_prompt = masked_prompt
         llm_response_masked = None
