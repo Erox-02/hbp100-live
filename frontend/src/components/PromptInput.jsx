@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-function PromptInput({ onSubmit, loading }) {
+function PromptInput({ onSubmit, loading, onFocus }) {
   const [prompt, setPrompt] = useState('')
 
   const handleSubmit = (e) => {
@@ -9,12 +9,6 @@ function PromptInput({ onSubmit, loading }) {
       onSubmit(prompt)
     }
   }
-
-  const examplePrompts = [
-    "I was born on 23rd March 1995.",
-    "Convert 15 June 2024 to hijri calander calendar",
-    "My email is john@gamil.com , how to access my spam in gmail??",
-  ]
 
   return (
     <div className="bg-gray-950 rounded-lg p-6 border border-gray-800 card-glow">
@@ -26,26 +20,30 @@ function PromptInput({ onSubmit, loading }) {
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Type a prompt containing sensitive information or ask about zodiac..."
+          onFocus={onFocus}
+          placeholder="Click here and start typing..."
           className="w-full h-32 px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-gray-200 placeholder-gray-600 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors resize-none"
           disabled={loading}
         />
 
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mt-4 gap-3 sm:gap-0">
-          <div className="flex flex-wrap gap-2">
-            {examplePrompts.map((example, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => setPrompt(example)}
-                className="px-3 py-1 text-xs bg-gray-800 border border-gray-700 rounded-lg text-gray-400 hover:border-gray-500 hover:text-gray-200 transition-colors"
-                disabled={loading}
-              >
-                Example {i + 1}
-              </button>
-            ))}
-          </div>
-          
+        {/* Static Examples - No Buttons */}
+        <div className="mt-4 p-3 bg-gray-900/50 rounded-lg border border-gray-800">
+          <p className="text-xs text-gray-500 mb-2">Try typing or copy-paste:</p>
+          <code className="text-xs text-gray-400 block">
+            "My birthday is 14th August 2009. What's my zodiac sign?"
+          </code>
+          <code className="text-xs text-gray-400 block mt-1">
+            "I was born on 23 March 1995. Tell me my horoscope."
+          </code>
+          <code className="text-xs text-gray-400 block mt-1">
+            "Convert 15 June 2024 to Hijri calendar"
+          </code>
+          <code className="text-xs text-gray-400 block mt-1">
+            "My email is john@gmail.com and SSN is 123-45-6789"
+          </code>
+        </div>
+
+        <div className="flex justify-end mt-4">
           <button
             type="submit"
             disabled={!prompt.trim() || loading}
