@@ -296,35 +296,48 @@ def replace_first_occurrence(text: str, old: str, new: str) -> str:
 def preprocess_with_fuzzy(text: str) -> str:
     return text
 
-def call_llm(masked_prompt: str) -> str:
+def call_llm(masked_prompt: str, metadata: Dict[str, Any]) -> str:
     if not GROQ_API_KEY or not groq_client:
         return "LLM not configured. Add GROQ_API_KEY to environment."
+    
+    if metadata:
+        allowed_text = ", ".join(metadata.keys())
+    else:
+        allowed_text = "No placeholders are allowed in the response."
+    
+    user_message = f"""Allowed placeholders you can use in your response:
+{allowed_text}
+
+User message:
+{masked_prompt}"""
     
     try:
         completion = groq_client.chat.completions.create(
             model="meta-llama/llama-4-scout-17b-16e-instruct",
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": masked_prompt}
+                {"role": "user", "content": user_message}
             ],
-            temperature=0.1,
+            temperature=0,
             max_tokens=200,
         )
-        return completion.choices[0].message.content
+        return completion.choices[0].message.content or ""
     except Exception as e:
         return f"LLM error: {str(e)}"
 
-def get_mock_response(result, masked_prompt: str) -> str:
-    if result.has_pii:
-        return f"[MOCK] I received your message. Detected and masked sensitive information. Here's what I see: {masked_prompt}"
-    else:
-        return f"[MOCK] Your message is clean. Here's what you said: {masked_prompt}"
+def get_mock_response(final_masked_prompt: str) -> str:
+    return f"MOCK MODE: This is what the LLM would receive:\n\n{final_masked_prompt}"
 
-def validate_placeholders(response: str, metadata: Dict[str, Any]) -> str:
-    placeholders = re.findall(r'\[[A-Z_0-9]+\]', response)
+def validate_placeholders(response: str, metadata: Dict[str, Any], is_mock: bool = False) -> str:
+    if is_mock:
+        return response
+    
+    pattern = r'\[(EMAIL|PHONE|OTP|SSN|YEAR|MONTH|DAY)_[0-9]+\]'
+    placeholders = re.findall(pattern, response)
     for ph in placeholders:
-        if ph not in metadata:
-            return f"[ERROR: Hallucinated placeholder {ph} detected. Please rephrase your response without inventing placeholders.]"
+        full_ph = f"[{ph}]"
+        if full_ph not in metadata:
+            return f"[ERROR: Hallucinated placeholder {full_ph} detected. The LLM invented a placeholder that wasn't in the allowed list: {list(metadata.keys())}]"
     return response
 
 class MockResult:
@@ -394,6 +407,7 @@ async def chat_endpoint(request: ChatRequest):
         if request.use_privacy:
             result = sanitize(masked_prompt)
             result.metadata.update(metadata)
+            masked_prompt = result.text
         else:
             result = MockResult(
                 text=masked_prompt,
@@ -404,7 +418,7 @@ async def chat_endpoint(request: ChatRequest):
         for value in result.metadata.values():
             detected_values.add(str(value))
         
-        fuzzy_entities = extract_fuzzy_entities(cleaned_prompt, counters, detected_values)
+        fuzzy_entities = extract_fuzzy_entities(masked_prompt, counters, detected_values)
         
         for entity in fuzzy_entities:
             placeholder = entity['placeholder']
@@ -413,22 +427,23 @@ async def chat_endpoint(request: ChatRequest):
             detected_values.add(entity['value'])
         
         final_masked_prompt = masked_prompt
+        llm_response_masked = None
+        llm_response_restored = None
         
         if request.use_real_llm:
-            llm_response_masked = call_llm(final_masked_prompt)
+            llm_response_masked = call_llm(final_masked_prompt, result.metadata)
+            llm_response_masked = validate_placeholders(llm_response_masked, result.metadata, is_mock=False)
+            llm_response_restored = restore_placeholders(llm_response_masked, result.metadata)
         else:
-            llm_response_masked = get_mock_response(result, final_masked_prompt)
-        
-        llm_response_masked = validate_placeholders(llm_response_masked, result.metadata)
-        
-        restored_response = restore_placeholders(llm_response_masked, result.metadata)
+            llm_response_masked = get_mock_response(final_masked_prompt)
+            llm_response_restored = llm_response_masked
         
         return ChatResponse(
             original_prompt=original_prompt,
             masked_prompt=final_masked_prompt if request.use_privacy else "",
             metadata=result.metadata,
             llm_response_masked=llm_response_masked,
-            llm_response_restored=restored_response if request.use_privacy else llm_response_masked,
+            llm_response_restored=llm_response_restored,
             has_pii=result.has_pii or len(fuzzy_entities) > 0 or len(metadata) > 0
         )
     except Exception as e:
