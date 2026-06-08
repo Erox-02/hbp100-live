@@ -35,6 +35,7 @@ groq_client = OpenAI(
 class ChatRequest(BaseModel):
     prompt: str
     use_real_llm: bool = False
+    use_privacy: bool = True
 
 class ChatResponse(BaseModel):
     original_prompt: str
@@ -326,6 +327,12 @@ def validate_placeholders(response: str, metadata: Dict[str, Any]) -> str:
             return f"[ERROR: Hallucinated placeholder {ph} detected. Please rephrase your response without inventing placeholders.]"
     return response
 
+class MockResult:
+    def __init__(self, text, metadata, has_pii):
+        self.text = text
+        self.metadata = metadata
+        self.has_pii = has_pii
+
 @app.post("/", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
     try:
@@ -384,8 +391,15 @@ async def chat_endpoint(request: ChatRequest):
             
             masked_prompt = masked_prompt.replace(original_date, masked_date)
         
-        result = sanitize(masked_prompt)
-        result.metadata.update(metadata)
+        if request.use_privacy:
+            result = sanitize(masked_prompt)
+            result.metadata.update(metadata)
+        else:
+            result = MockResult(
+                text=masked_prompt,
+                metadata=metadata,
+                has_pii=False
+            )
         
         for value in result.metadata.values():
             detected_values.add(str(value))
@@ -411,10 +425,10 @@ async def chat_endpoint(request: ChatRequest):
         
         return ChatResponse(
             original_prompt=original_prompt,
-            masked_prompt=final_masked_prompt,
+            masked_prompt=final_masked_prompt if request.use_privacy else "",
             metadata=result.metadata,
             llm_response_masked=llm_response_masked,
-            llm_response_restored=restored_response,
+            llm_response_restored=restored_response if request.use_privacy else llm_response_masked,
             has_pii=result.has_pii or len(fuzzy_entities) > 0 or len(metadata) > 0
         )
     except Exception as e:
