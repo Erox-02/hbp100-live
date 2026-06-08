@@ -12,7 +12,8 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
-  const [useRealLLM, setUseRealLLM] = useState(true)  
+  const [useRealLLM, setUseRealLLM] = useState(true)
+  const [usePrivacy, setUsePrivacy] = useState(true)
 
   const handleSubmit = async (prompt) => {
     setLoading(true)
@@ -25,7 +26,11 @@ function App() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt, use_real_llm: useRealLLM }),
+        body: JSON.stringify({ 
+          prompt, 
+          use_real_llm: useRealLLM,
+          use_privacy: usePrivacy 
+        }),
       })
 
       if (!response.ok) {
@@ -69,17 +74,30 @@ function App() {
                 </p>
               </div>
             </div>
-            {/* Mode Toggle Button - BETA is default */}
-            <button
-              onClick={() => setUseRealLLM(!useRealLLM)}
-              className={`px-3 py-1.5 text-xs sm:text-sm rounded-lg transition-all duration-200 font-medium ${
-                useRealLLM 
-                  ? 'bg-yellow-600/20 border border-yellow-500/50 text-yellow-400 hover:bg-yellow-600/30' 
-                  : 'bg-gray-800 border border-gray-700 text-gray-400 hover:bg-gray-700'
-              }`}
-            >
-              {useRealLLM ? 'BETA: Real LLM' : 'Mock Mode'}
-            </button>
+            <div className="flex items-center gap-3">
+              {/* Privacy Toggle */}
+              <button
+                onClick={() => setUsePrivacy(!usePrivacy)}
+                className={`px-3 py-1.5 text-xs sm:text-sm rounded-lg transition-all duration-200 font-medium ${
+                  usePrivacy 
+                    ? 'bg-emerald-600/20 border border-emerald-500/50 text-emerald-400 hover:bg-emerald-600/30' 
+                    : 'bg-gray-800 border border-gray-700 text-gray-400 hover:bg-gray-700'
+                }`}
+              >
+                {usePrivacy ? '🔒 Privacy ON' : '🔓 Privacy OFF'}
+              </button>
+              {/* LLM Mode Toggle */}
+              <button
+                onClick={() => setUseRealLLM(!useRealLLM)}
+                className={`px-3 py-1.5 text-xs sm:text-sm rounded-lg transition-all duration-200 font-medium ${
+                  useRealLLM 
+                    ? 'bg-yellow-600/20 border border-yellow-500/50 text-yellow-400 hover:bg-yellow-600/30' 
+                    : 'bg-gray-800 border border-gray-700 text-gray-400 hover:bg-gray-700'
+                }`}
+              >
+                {useRealLLM ? 'BETA: Real LLM' : 'Mock Mode'}
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -89,13 +107,26 @@ function App() {
         {/* Input Section */}
         <PromptInput onSubmit={handleSubmit} loading={loading} />
 
-        {/* BETA Mode Indicator (always visible since it's default) */}
-        <div className="mt-4 p-2 bg-yellow-600/10 border border-yellow-500/30 rounded-lg text-center">
-          <p className="text-xs text-yellow-400">
-            {useRealLLM 
-              ? '⚠️ BETA MODE: Using real Groq LLM. Responses may vary. Toggle off for consistent mock responses.'
-              : '✓ MOCK MODE: Using simulated responses. Toggle on for real Groq LLM (BETA).'}
-          </p>
+        {/* Mode Indicators */}
+        <div className="mt-4 space-y-2">
+          <div className={`p-2 rounded-lg text-center border ${
+            usePrivacy 
+              ? 'bg-emerald-600/10 border-emerald-500/30' 
+              : 'bg-red-950/30 border-red-800/50'
+          }`}>
+            <p className="text-xs">
+              {usePrivacy 
+                ? '🔒 PRIVACY MODE: Your data is masked before reaching the LLM' 
+                : '🔓 RAW MODE: Your data is sent directly to the LLM (no privacy protection)'}
+            </p>
+          </div>
+          <div className="p-2 bg-yellow-600/10 border border-yellow-500/30 rounded-lg text-center">
+            <p className="text-xs text-yellow-400">
+              {useRealLLM 
+                ? '⚠️ BETA MODE: Using real Groq LLM. Responses may vary. Toggle off for consistent mock responses.'
+                : '✓ MOCK MODE: Using simulated responses. Toggle on for real Groq LLM (BETA).'}
+            </p>
+          </div>
         </div>
 
         {/* Error Message */}
@@ -128,16 +159,18 @@ function App() {
               <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm">
                 {[
                   'User Prompt',
-                  'Pield Sanitizer',
-                  'Masked Prompt',
+                  usePrivacy ? 'Pield Sanitizer (ON)' : 'Pield Sanitizer (OFF)',
+                  usePrivacy ? 'Masked Prompt' : 'Raw Prompt',
                   useRealLLM ? 'Groq LLM (BETA)' : 'Mock LLM',
-                  'Masked Response',
-                  'Restoration',
+                  'Response',
+                  usePrivacy ? 'Restoration' : 'No Restoration',
                   'Final Response',
                 ].map((step, i) => (
                   <div key={i} className="flex items-center">
                     <span className={`px-2 sm:px-3 py-1 rounded-full text-gray-300 ${
-                      step === 'Groq LLM (BETA)' ? 'bg-yellow-600/20 border border-yellow-500/50' : 'bg-gray-800'
+                      step === 'Groq LLM (BETA)' ? 'bg-yellow-600/20 border border-yellow-500/50' : 
+                      step === 'Pield Sanitizer (ON)' ? 'bg-emerald-600/20 border border-emerald-500/50' :
+                      'bg-gray-800'
                     }`}>
                       {step}
                     </span>
@@ -147,25 +180,59 @@ function App() {
               </div>
             </div>
 
+            {/* PII Status (only show if privacy is on) */}
+            {usePrivacy && result.has_pii && (
+              <div className="p-4 rounded-lg border bg-emerald-950/30 border-emerald-800/50 text-emerald-400">
+                <span className="font-semibold">🛡️ PII Detected and Masked</span>
+              </div>
+            )}
+
+            {usePrivacy && !result.has_pii && (
+              <div className="p-4 rounded-lg border bg-gray-800/30 border-gray-700 text-gray-400">
+                <span className="font-semibold">✓ No PII Detected</span>
+              </div>
+            )}
+
+            {!usePrivacy && (
+              <div className="p-4 rounded-lg border bg-red-950/30 border-red-800/50 text-red-400">
+                <span className="font-semibold">⚠️ PRIVACY OFF: Your data is sent directly to the LLM</span>
+              </div>
+            )}
+
             {/* Results Grid */}
             <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
               <ResultCard title="Original Prompt" data={result.original_prompt} type="original" />
-              <ResultCard title="Masked Prompt" data={result.masked_prompt} type="masked" />
-              <MetadataViewer metadata={result.metadata} />
+              {usePrivacy && (
+                <ResultCard title="Masked Prompt" data={result.masked_prompt} type="masked" />
+              )}
+              {usePrivacy && (
+                <MetadataViewer metadata={result.metadata} />
+              )}
               <ResultCard 
-                title={useRealLLM ? "LLM Response (Masked) [BETA]" : "LLM Response (Masked)"} 
+                title={useRealLLM ? "LLM Response [BETA]" : "LLM Response (Mock)"} 
                 data={result.llm_response_masked || 'No response'} 
                 type="llm" 
               />
             </div>
 
-            {/* Final Restored Response */}
-            <ResultCard
-              title="Restored Final Response"
-              data={result.llm_response_restored || 'No restored response'}
-              type="restored"
-              fullWidth
-            />
+            {/* Final Restored Response (only show if privacy is on) */}
+            {usePrivacy && (
+              <ResultCard
+                title="Restored Final Response"
+                data={result.llm_response_restored || 'No restored response'}
+                type="restored"
+                fullWidth
+              />
+            )}
+
+            {!usePrivacy && (
+              <ResultCard
+                title="Final Response (Raw)"
+                data={result.llm_response_masked || 'No response'}
+                type="original"
+                fullWidth
+              />
+            )}
           </div>
         )}
 
