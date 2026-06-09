@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-function PromptInput({ onSubmit, loading, onFocus }) {
+function PromptInput({ onSubmit, loading, onFocus, onCopyExample }) {
   const [prompt, setPrompt] = useState('')
 
   const handleSubmit = (e) => {
@@ -8,6 +8,18 @@ function PromptInput({ onSubmit, loading, onFocus }) {
     if (prompt.trim() && !loading) {
       onSubmit(prompt)
     }
+  }
+
+  const examples = [
+    "My birthday is 14th August 2009. What's my zodiac sign?",
+    "I was born on 23 March 1995. Tell me my horoscope.",
+    "Convert 15 June 2024 to Hijri calendar",
+    "My email is john@gmail.com and SSN is 123-45-6789"
+  ]
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text)
+    onCopyExample()
   }
 
   return (
@@ -26,21 +38,20 @@ function PromptInput({ onSubmit, loading, onFocus }) {
           disabled={loading}
         />
 
-        {/* Static Examples - No Buttons */}
         <div className="mt-4 p-3 bg-gray-900/50 rounded-lg border border-gray-800">
           <p className="text-xs text-gray-500 mb-2">Try typing or copy-paste:</p>
-          <code className="text-xs text-gray-400 block">
-            "My birthday is 14th August 2009. What's my zodiac sign?"
-          </code>
-          <code className="text-xs text-gray-400 block mt-1">
-            "I was born on 23 March 1995. Tell me my horoscope."
-          </code>
-          <code className="text-xs text-gray-400 block mt-1">
-            "Convert 15 June 2024 to Hijri calendar"
-          </code>
-          <code className="text-xs text-gray-400 block mt-1">
-            "My email is john@gmail.com and SSN is 123-45-6789"
-          </code>
+          {examples.map((example, idx) => (
+            <div key={idx} className="flex items-center justify-between group mb-1 last:mb-0">
+              <code className="text-xs text-gray-400">{example}</code>
+              <button
+                type="button"
+                onClick={() => copyToClipboard(example)}
+                className="opacity-0 group-hover:opacity-100 text-xs text-gray-500 hover:text-gray-300 transition px-2 py-0.5 rounded"
+              >
+                Copy
+              </button>
+            </div>
+          ))}
         </div>
 
         <div className="flex justify-end mt-4">
