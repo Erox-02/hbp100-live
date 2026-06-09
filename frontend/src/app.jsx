@@ -20,7 +20,7 @@ function App() {
     fetch(`${API_URL}warmup`).catch(() => {})
   }, [])
 
-  const handlePromptFocus = () => {
+  const triggerWarmup = () => {
     if (!warmupSent) {
       fetch(`${API_URL}warmup`).catch(() => {})
       setWarmupSent(true)
@@ -108,7 +108,12 @@ function App() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
-        <PromptInput onSubmit={handleSubmit} loading={loading} onFocus={handlePromptFocus} />
+        <PromptInput 
+          onSubmit={handleSubmit} 
+          loading={loading} 
+          onFocus={triggerWarmup}
+          onCopyExample={triggerWarmup}
+        />
 
         <div className="mt-4 space-y-2">
           <div className={`p-2 rounded-lg text-center border ${
