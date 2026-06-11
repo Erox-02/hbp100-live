@@ -14,16 +14,17 @@ function App() {
   const [error, setError] = useState(null)
   const [useRealLLM, setUseRealLLM] = useState(true)
   const [usePrivacy, setUsePrivacy] = useState(true)
-  const [warmupSent, setWarmupSent] = useState(false)
+  const [isWarm, setIsWarm] = useState(false)
 
   useEffect(() => {
     fetch(`${API_URL}warmup`).catch(() => {})
   }, [])
 
-  const triggerWarmup = () => {
-    if (!warmupSent) {
-      fetch(`${API_URL}warmup`).catch(() => {})
-      setWarmupSent(true)
+  const handleWarmup = () => {
+    if (!isWarm) {
+      fetch(`${API_URL}warmup`)
+        .then(() => setIsWarm(true))
+        .catch(() => {})
     }
   }
 
@@ -111,8 +112,8 @@ function App() {
         <PromptInput 
           onSubmit={handleSubmit} 
           loading={loading} 
-          onFocus={triggerWarmup}
-          onCopyExample={triggerWarmup}
+          onWarmup={handleWarmup}
+          isWarm={isWarm}
         />
 
         <div className="mt-4 space-y-2">
