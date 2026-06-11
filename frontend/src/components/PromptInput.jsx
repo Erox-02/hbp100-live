@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-function PromptInput({ onSubmit, loading, onFocus, onCopyExample }) {
+function PromptInput({ onSubmit, loading, onWarmup }) {
   const [prompt, setPrompt] = useState('')
 
   const handleSubmit = (e) => {
@@ -19,20 +19,29 @@ function PromptInput({ onSubmit, loading, onFocus, onCopyExample }) {
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text)
-    onCopyExample()
+    onWarmup()  // Warmup on copy
   }
 
   return (
     <div className="bg-gray-950 rounded-lg p-6 border border-gray-800 card-glow">
-      <form onSubmit={handleSubmit}>
-        <label className="block text-lg font-semibold text-gray-300 mb-3">
+      <div className="flex justify-between items-center mb-3">
+        <label className="block text-lg font-semibold text-gray-300">
           Enter Your Prompt
         </label>
-        
+        <button
+          type="button"
+          onClick={onWarmup}
+          className="px-3 py-1 text-xs rounded-lg bg-gray-800 border border-gray-700 text-gray-400 hover:bg-gray-700 hover:text-gray-200 transition"
+        >
+          ⚡ Warmup
+        </button>
+      </div>
+
+      <form onSubmit={handleSubmit}>
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          onFocus={onFocus}
+          onFocus={onWarmup}  // ← Warmup when user clicks into textarea
           placeholder="Click here and start typing..."
           className="w-full h-32 px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-gray-200 placeholder-gray-600 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors resize-none"
           disabled={loading}
