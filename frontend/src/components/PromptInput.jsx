@@ -19,29 +19,20 @@ function PromptInput({ onSubmit, loading, onWarmup }) {
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text)
-    onWarmup()  // Warmup on copy
+    onWarmup()
   }
 
   return (
     <div className="bg-gray-950 rounded-lg p-6 border border-gray-800 card-glow">
-      <div className="flex justify-between items-center mb-3">
-        <label className="block text-lg font-semibold text-gray-300">
-          Enter Your Prompt
-        </label>
-        <button
-          type="button"
-          onClick={onWarmup}
-          className="px-3 py-1 text-xs rounded-lg bg-gray-800 border border-gray-700 text-gray-400 hover:bg-gray-700 hover:text-gray-200 transition"
-        >
-          ⚡ Warmup
-        </button>
-      </div>
+      <label className="block text-lg font-semibold text-gray-300 mb-3">
+        Enter Your Prompt
+      </label>
 
       <form onSubmit={handleSubmit}>
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          onFocus={onWarmup}  // ← Warmup when user clicks into textarea
+          onFocus={onWarmup}
           placeholder="Click here and start typing..."
           className="w-full h-32 px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-gray-200 placeholder-gray-600 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors resize-none"
           disabled={loading}
