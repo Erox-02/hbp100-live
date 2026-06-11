@@ -14,18 +14,13 @@ function App() {
   const [error, setError] = useState(null)
   const [useRealLLM, setUseRealLLM] = useState(true)
   const [usePrivacy, setUsePrivacy] = useState(true)
-  const [isWarm, setIsWarm] = useState(false)
 
   useEffect(() => {
     fetch(`${API_URL}warmup`).catch(() => {})
   }, [])
 
   const handleWarmup = () => {
-    if (!isWarm) {
-      fetch(`${API_URL}warmup`)
-        .then(() => setIsWarm(true))
-        .catch(() => {})
-    }
+    fetch(`${API_URL}warmup`).catch(() => {})
   }
 
   const handleSubmit = async (prompt) => {
@@ -113,7 +108,6 @@ function App() {
           onSubmit={handleSubmit} 
           loading={loading} 
           onWarmup={handleWarmup}
-          isWarm={isWarm}
         />
 
         <div className="mt-4 space-y-2">
