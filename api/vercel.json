@@ -1,4 +1,20 @@
 {
-  "builds": [{ "src": "index.py", "use": "@vercel/python" }],
-  "routes": [{ "src": "/(.*)", "dest": "index.py" }]
+  "builds": [
+    { 
+      "src": "index.py", 
+      "use": "@vercel/python" 
+    }
+  ],
+  "routes": [
+    { "src": "/warmup", "dest": "index.py" },
+    { "src": "/health", "dest": "index.py" },
+    { "src": "/(.*)", "dest": "index.py" }
+  ],
+  "functions": {
+    "index.py": {
+      "memory": 1024,
+      "maxDuration": 10,
+      "regions": ["iad1"]
+    }
+  }
 }
