@@ -19,6 +19,17 @@ function App() {
     fetch(`${API_URL}warmup`).catch(() => {})
   }, [])
 
+  useEffect(() => {
+    if (result && !loading) {
+      setTimeout(() => {
+        document.getElementById('results')?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        })
+      }, 100)
+    }
+  }, [result, loading])
+
   const handleWarmup = () => {
     fetch(`${API_URL}warmup`).catch(() => {})
   }
@@ -86,7 +97,7 @@ function App() {
                     : 'bg-gray-800 border border-gray-700 text-gray-400 hover:bg-gray-700'
                 }`}
               >
-                {usePrivacy ? '🔒 Privacy ON' : '🔓 Privacy OFF'}
+                {usePrivacy ? 'Privacy ON' : 'Privacy OFF'}
               </button>
               <button
                 onClick={() => setUseRealLLM(!useRealLLM)}
@@ -118,8 +129,8 @@ function App() {
           }`}>
             <p className="text-xs">
               {usePrivacy 
-                ? '🔒 PRIVACY MODE: Your data is masked before reaching the LLM' 
-                : '🔓 RAW MODE: Your data is sent directly to the LLM (no privacy protection)'}
+                ? 'PRIVACY MODE: Your data is masked before reaching the LLM' 
+                : 'RAW MODE: Your data is sent directly to the LLM (no privacy protection)'}
             </p>
           </div>
           <div className="p-2 bg-yellow-600/10 border border-yellow-500/30 rounded-lg text-center">
@@ -144,8 +155,9 @@ function App() {
 
         {loading && <LoadingSpinner />}
 
+        {/* Added id="results" to the results container */}
         {result && !loading && (
-          <div className="mt-6 sm:mt-8 space-y-4 sm:space-y-6 animate-fade-in">
+          <div id="results" className="mt-6 sm:mt-8 space-y-4 sm:space-y-6 animate-fade-in">
             <div className="bg-gray-950/50 rounded-lg p-4 sm:p-6 border border-gray-800">
               <h2 className="text-base sm:text-lg font-semibold text-gray-300 mb-3 sm:mb-4">
                 Pipeline Flow
@@ -176,7 +188,7 @@ function App() {
 
             {usePrivacy && result.has_pii && (
               <div className="p-4 rounded-lg border bg-emerald-950/30 border-emerald-800/50 text-emerald-400">
-                <span className="font-semibold">🛡️ PII Detected and Masked</span>
+                <span className="font-semibold">PII Detected and Masked</span>
               </div>
             )}
 
@@ -251,7 +263,7 @@ function App() {
 
       <footer className="border-t border-gray-800 mt-12 sm:mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 text-center text-xs sm:text-sm text-gray-600">
-          <p>Pield Privacy Firewall — Ultra-light LLM Privacy Protection</p>
+          <p>Hbp100 Privacy Firewall — Ultra-light LLM Privacy Protection</p>
           <p className="mt-1">Built by Erox-02 using hbp100</p>
         </div>
       </footer>
