@@ -69,8 +69,8 @@ function App() {
               </div>
               <div>
                 <h1 className="text-xl sm:text-3xl font-bold">
-                  <span className="text-white">Pield</span>
-                  <span className="text-gray-500"> Privacy Firewall</span>
+                  <span className="text-white">HBP100</span>
+                  <span className="text-gray-500">: Privacy Firewall</span>
                 </h1>
                 <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1">
                   Your secrets are masked before they ever reach the LLM
