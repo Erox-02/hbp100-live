@@ -63,6 +63,8 @@ The result:
 
 ##  Live Demo
 
+![HBP100 Demo](frontend/public/screenshots/hero.png)
+
 ### Privacy OFF
 
 ```text
@@ -153,6 +155,20 @@ hbp100 catches them while preserving the original text.
 | PII Types      | 40+                       |
 
 Privacy should not come at the cost of performance.
+
+---
+
+### Real Deployment Performance
+
+The screenshot below was captured from the live Vercel deployment using browser developer tools.
+
+The complete request takes roughly **400-500 ms**, while the hbp100 privacy pipeline itself adds less than **1 ms** of processing time.
+
+This means the privacy layer is effectively invisible compared to normal network and LLM latency.
+
+---
+
+![Live Deployment Latency](frontend/public/screenshots/dev.png)
 
 ---
 
