@@ -144,13 +144,14 @@ hbp100 catches them while preserving the original text.
 
 ---
 
-### 📱 Mobile Friendly
+### Mobile Friendly
 
 Fully responsive across desktop and mobile devices.
 
-![Mobile Demo](frontend/public/screenshots/phone.png)
+![Mobile Demo](frontend/public/Screenshots/phone.png)
 
 The screenshot above shows fuzzy detection successfully identifying and masking a misspelled email address on a mobile device
+
 ---
 
 ### ~ Tiny and Fast
