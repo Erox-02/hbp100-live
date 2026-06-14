@@ -63,7 +63,7 @@ The result:
 
 ##  Live Demo
 
-![HBP100 Demo](frontend/public/screenshots/hero.png)
+![HBP100 Demo](frontend/public/Screenshots/hero.png)
 
 ### Privacy OFF
 
@@ -168,7 +168,7 @@ This means the privacy layer is effectively invisible compared to normal network
 
 ---
 
-![Live Deployment Latency](frontend/public/screenshots/dev.png)
+![Live Deployment Latency](frontend/public/Screenshots/dev.png)
 
 ---
 
