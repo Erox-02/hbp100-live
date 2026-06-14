@@ -142,6 +142,8 @@ Traditional regex often misses these cases.
 
 hbp100 catches them while preserving the original text.
 
+![FUZZY DEMO ON PHONE](frontend/public/Screenshots/phone.png)
+
 ---
 
 ### ~ Tiny and Fast
