@@ -142,8 +142,15 @@ Traditional regex often misses these cases.
 
 hbp100 catches them while preserving the original text.
 
-![FUZZY DEMO ON PHONE](frontend/public/Screenshots/phone.png)
+---
 
+### 📱 Mobile Friendly
+
+Fully responsive across desktop and mobile devices.
+
+![Mobile Demo](frontend/public/screenshots/phone.png)
+
+The screenshot above shows fuzzy detection successfully identifying and masking a misspelled email address on a mobile device
 ---
 
 ### ~ Tiny and Fast
